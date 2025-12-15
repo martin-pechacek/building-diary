@@ -1,5 +1,7 @@
 # Building Diary
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/martin-pechacek/building-diary/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/martin-pechacek/building-diary/tree/main)
+
 A web application for tracking construction and building project progress.
 
 ## Tech Stack
