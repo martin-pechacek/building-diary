@@ -19,8 +19,7 @@ A web application for tracking construction and building project progress.
 ## Prerequisites
 
 - Java 25+
-- PostgreSQL
-- Redis
+- Docker and Docker Compose
 
 ## Setup
 
@@ -30,12 +29,63 @@ A web application for tracking construction and building project progress.
    cd building-diary
    ```
 
-2. Configure the database and Redis connection in `src/main/resources/application.yaml`
+2. Start the infrastructure services:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d
+   ```
 
 3. Run the application:
    ```bash
    ./gradlew bootRun
    ```
+
+## Docker Setup
+
+The project includes a Docker Compose configuration in the `docker/` folder for local development with the following services:
+
+| Service    | Port | Credentials                    | Purpose              |
+|------------|------|--------------------------------|----------------------|
+| PostgreSQL | 5432 | `building_diary:building_diary`| Primary database     |
+| Redis      | 6379 | -                              | Session storage      |
+| Keycloak   | 8180 | `admin:admin`                  | Authentication server|
+
+### Commands
+
+Start all services:
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Stop all services:
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+Stop and remove volumes (reset data):
+```bash
+docker compose -f docker/docker-compose.yml down -v
+```
+
+View logs:
+```bash
+docker compose -f docker/docker-compose.yml logs -f [service_name]
+```
+
+Check service health:
+```bash
+docker compose -f docker/docker-compose.yml ps
+```
+
+### Data Persistence
+
+All service data is persisted in Docker volumes:
+- `postgres_data` - PostgreSQL database files
+- `redis_data` - Redis append-only file
+- `keycloak_data` - Keycloak data
+
+### Keycloak Admin Console
+
+Access the Keycloak admin console at http://localhost:8180 with credentials `admin:admin`.
 
 ## Development
 
