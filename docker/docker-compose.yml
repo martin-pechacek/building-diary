@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: building-diary-postgres
+    environment:
+      POSTGRES_DB: building_diary
+      POSTGRES_USER: building_diary
+      POSTGRES_PASSWORD: building_diary
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:8-alpine
+    container_name: building-diary-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    container_name: building-diary-keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/building_diary
+      KC_DB_USERNAME: building_diary
+      KC_DB_PASSWORD: building_diary
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8180
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    command: start-dev
+    depends_on:
+      postgres:
+        condition: service_healthy

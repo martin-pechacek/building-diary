@@ -43,7 +43,10 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-session-data-redis-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("com.h2database:h2")
-	testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
+	testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+	testImplementation("org.testcontainers:postgresql:1.21.3")
+	testImplementation("com.redis:testcontainers-redis:2.2.2")
+	testImplementation("redis.clients:jedis:5.2.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
