@@ -1,0 +1,59 @@
+version: 2.1
+
+executors:
+  java-executor:
+    docker:
+      - image: cimg/openjdk:25.0
+    working_directory: ~/project
+
+jobs:
+  build:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - gradle-deps-{{ checksum "build.gradle.kts" }}
+            - gradle-deps-
+      - run:
+          name: Build project
+          command: ./gradlew build -x test
+      - save_cache:
+          key: gradle-deps-{{ checksum "build.gradle.kts" }}
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+      - persist_to_workspace:
+          root: .
+          paths:
+            - build
+
+  test:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - gradle-deps-{{ checksum "build.gradle.kts" }}
+            - gradle-deps-
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run tests
+          command: ./gradlew test
+      - store_test_results:
+          path: build/test-results/test
+      - store_artifacts:
+          path: build/reports/tests/test
+          destination: test-reports
+
+workflows:
+  build-and-test:
+    when:
+      not:
+        equal: [ main, << pipeline.git.branch >> ]
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
