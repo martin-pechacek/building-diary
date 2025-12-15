@@ -49,6 +49,9 @@ jobs:
 
 workflows:
   build-and-test:
+    when:
+      not:
+        equal: [ main, << pipeline.git.branch >> ]
     jobs:
       - build
       - test:
