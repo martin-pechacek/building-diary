@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
   redis:
     image: redis:8-alpine
@@ -40,5 +40,9 @@ services:
       - keycloak_data:/opt/keycloak/data
     command: start-dev
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+  keycloak_data:
