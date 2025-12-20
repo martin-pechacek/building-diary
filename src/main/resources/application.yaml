@@ -2,6 +2,21 @@ spring:
   application:
     name: building-diary
 
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: building-diary-client
+            client-secret: IGm1CRdduJgUTmfqAeE6JjbiU2gBUN5r
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/building-diary
+            user-name-attribute: preferred_username
+
   datasource:
     url: jdbc:postgresql://localhost:5432/building_diary
     username: building_diary
