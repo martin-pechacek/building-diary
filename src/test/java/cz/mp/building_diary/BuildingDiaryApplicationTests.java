@@ -13,18 +13,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Import(TestSecurityConfig.class)
 class BuildingDiaryApplicationTests {
 
-	@Autowired
-	private ApplicationContext applicationContext;
+    @Autowired
+    private ApplicationContext applicationContext;
 
-	@Test
-	void contextLoads() {
-		assertNotNull(applicationContext, "Application context should load successfully");
-	}
+    @Test
+    void contextLoads() {
+        assertNotNull(applicationContext, "Application context should load successfully");
+    }
 
-	@Test
-	void applicationHasRequiredBeans() {
-		assertNotNull(applicationContext.getBean(BuildingDiaryApplication.class),
-				"Main application bean should be present");
-	}
+    @Test
+    void applicationHasRequiredBeans() {
+        assertNotNull(applicationContext.getBean(BuildingDiaryApplication.class),
+                "Main application bean should be present");
+    }
 
 }
