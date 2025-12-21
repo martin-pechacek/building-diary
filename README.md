@@ -138,7 +138,39 @@ After starting Keycloak for the first time, you need to configure the realm, rol
 2. Copy the **Client secret**
 3. Paste it into `src/main/resources/application.yaml` under `spring.security.oauth2.client.registration.keycloak.client-secret`
 
-#### 5. Create Test Users
+#### 5. Create Admin Client
+
+This client is used by the Spring Boot backend to create users in Keycloak.
+
+1. Go to **Clients** in the left menu
+2. Click **Create client**
+3. **General Settings:**
+   - **Client type:** OpenID Connect
+   - **Client ID:** `building-diary-admin`
+   - Click **Next**
+4. **Capability config:**
+   - **Client authentication:** ON
+   - **Authorization:** OFF
+   - **Authentication flow:** Uncheck all, check only **Service accounts roles**
+   - Click **Next**
+5. **Login settings:**
+   - Leave all fields empty
+   - Click **Save**
+6. Go to **Service account roles** tab
+7. Click **Assign role** -> *Client roles*
+8. Search for `realm-management` and assign these roles:
+   - `manage-users`
+   - `view-users`
+   - `query-users`
+9. Go to the **Credentials** tab
+10. Copy the **Client secret** and set it as environment variable or in application.yaml:
+    ```yaml
+    keycloak:
+      admin:
+        client-secret: <your-admin-client-secret>
+    ```
+
+#### 6. Create Test Users
 
 1. Go to **Users** in the left menu
 2. Click **Create new user**

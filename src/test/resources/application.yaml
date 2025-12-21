@@ -1,6 +1,8 @@
 spring:
   application:
     name: building-diary
+  main:
+    allow-bean-definition-overriding: true
 
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -20,6 +22,15 @@ spring:
     redis:
       host: localhost
       port: 6370
+
+keycloak:
+  admin:
+    server-url: http://localhost:8180
+    realm: test
+    client-id: test-admin
+    client-secret: test-secret
+    target-realm: test
+    default-role: USER
 
 springdoc:
   api-docs:
