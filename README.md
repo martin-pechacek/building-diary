@@ -247,3 +247,82 @@ Configure connection details in `application.yaml` or via environment variables.
 |----------|-------------|
 | `/swagger-ui.html` | Interactive API documentation |
 | `/api-docs` | OpenAPI JSON specification |
+
+## Authentication
+
+### Auth Flow (BFF Pattern)
+
+The application uses a Backend-for-Frontend (BFF) pattern where JWT tokens are stored server-side in Redis sessions, not exposed to the client.
+
+```
+┌─────────┐         ┌─────────────┐         ┌──────────┐         ┌───────┐
+│ Client  │         │   Backend   │         │ Keycloak │         │ Redis │
+└────┬────┘         └──────┬──────┘         └────┬─────┘         └───┬───┘
+     │                     │                     │                   │
+     │ POST /auth/login    │                     │                   │
+     │ {email, password}   │                     │                   │
+     │────────────────────>│                     │                   │
+     │                     │                     │                   │
+     │                     │ Token Request       │                   │
+     │                     │ (password grant)    │                   │
+     │                     │────────────────────>│                   │
+     │                     │                     │                   │
+     │                     │ JWT Tokens          │                   │
+     │                     │<────────────────────│                   │
+     │                     │                     │                   │
+     │                     │ Store session       │                   │
+     │                     │ (tokens + claims)   │                   │
+     │                     │─────────────────────────────────────────>
+     │                     │                     │                   │
+     │ {username, roles}   │                     │                   │
+     │ + Session Cookie    │                     │                   │
+     │<────────────────────│                     │                   │
+     │                     │                     │                   │
+     │ GET /api/resource   │                     │                   │
+     │ (with cookie)       │                     │                   │
+     │────────────────────>│                     │                   │
+     │                     │                     │                   │
+     │                     │ Check session       │                   │
+     │                     │ expiration only     │                   │
+     │                     │<─────────────────────────────────────────
+     │                     │                     │                   │
+     │ Response            │                     │                   │
+     │<────────────────────│                     │                   │
+```
+
+**Key points:**
+- Client never sees JWT tokens
+- Session stores: username, email, roles, token expiration, tokens (for refresh)
+- On each request: only expiration timestamp is checked (no Keycloak call)
+- On refresh: re-validates with Keycloak
+
+### Auth Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/register` | POST | Register new user |
+| `/api/v1/auth/login` | POST | Authenticate and create session |
+| `/api/v1/auth/refresh` | POST | Refresh session tokens |
+
+### Keycloak Clients
+
+The application uses two separate Keycloak clients with different purposes:
+
+| Client | Purpose | Grant Type | Used For |
+|--------|---------|------------|----------|
+| `building-diary-admin` | User management | Client Credentials | Creating/deleting users during registration |
+| `building-diary-client` | User authentication | Password Grant | Login and token refresh |
+
+#### building-diary-admin
+
+Service account client for backend-to-Keycloak communication:
+- **Authentication flow:** Service accounts only
+- **Permissions:** `manage-users`, `view-users`, `query-users`
+- **Usage:** Called by `KeycloakServiceImpl.createUser()` and `deleteUser()`
+
+#### building-diary-client
+
+Public-facing client for user authentication:
+- **Authentication flow:** Direct access grants (password grant)
+- **Usage:** Called by `KeycloakServiceImpl.authenticate()` and `refreshToken()`
+- **Security:** Client secret stored server-side, never exposed to frontend

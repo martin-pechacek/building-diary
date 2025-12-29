@@ -1,7 +1,8 @@
 package cz.mp.building_diary.controller;
 
-import cz.mp.building_diary.controller.v1.AuthController;
-import cz.mp.building_diary.controller.v1.dto.UserRegistrationRequestDto;
+import cz.mp.building_diary.dto.LoginRequestDto;
+import cz.mp.building_diary.dto.UserRegistrationRequestDto;
+import cz.mp.building_diary.exception.AuthenticationException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
@@ -17,10 +18,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static cz.mp.building_diary.controller.v1.AuthController.URL;
+import static cz.mp.building_diary.controller.AuthController.URL;
 import static cz.mp.building_diary.util.JsonTestUtil.toJson;
 import static cz.mp.building_diary.util.TestFixtures.EMAIL;
 import static cz.mp.building_diary.util.TestFixtures.KEYCLOAK_ID;
+import static cz.mp.building_diary.util.TestFixtures.loginRequest;
+import static cz.mp.building_diary.util.TestFixtures.loginResponse;
 import static cz.mp.building_diary.util.TestFixtures.registrationRequest;
 import static cz.mp.building_diary.util.TestFixtures.registrationResponse;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     private static final String REGISTER_URL = URL + "/register";
+    private static final String LOGIN_URL = URL + "/login";
 
     private MockMvc mockMvc;
 
@@ -147,6 +151,79 @@ class AuthControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(userService, never()).registerUser(any());
+        }
+    }
+
+    @Nested
+    class Login {
+
+        @Test
+        void shouldLoginSuccessfully() throws Exception {
+            when(userService.login(any(LoginRequestDto.class), any())).thenReturn(loginResponse());
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(loginRequest())))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenEmailIsBlank() throws Exception {
+            LoginRequestDto request = new LoginRequestDto("", "SecurePass123!");
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(userService, never()).login(any(), any());
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
+            LoginRequestDto request = new LoginRequestDto("invalid-email", "SecurePass123!");
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(userService, never()).login(any(), any());
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenPasswordIsBlank() throws Exception {
+            LoginRequestDto request = new LoginRequestDto(EMAIL, "");
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(userService, never()).login(any(), any());
+        }
+
+        @Test
+        void shouldReturnUnauthorizedWhenCredentialsAreInvalid() throws Exception {
+            when(userService.login(any(), any()))
+                    .thenThrow(new AuthenticationException("Invalid credentials", AuthenticationException.ErrorCode.INVALID_CREDENTIALS));
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(loginRequest())))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.message").value("Invalid credentials"));
+        }
+
+        @Test
+        void shouldReturnServiceUnavailableWhenKeycloakFails() throws Exception {
+            when(userService.login(any(), any()))
+                    .thenThrow(new AuthenticationException("Keycloak unavailable", AuthenticationException.ErrorCode.KEYCLOAK_ERROR));
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(loginRequest())))
+                    .andExpect(status().isServiceUnavailable());
         }
     }
 }

@@ -1,6 +1,7 @@
 package cz.mp.building_diary.config;
 
 import cz.mp.building_diary.properties.KeycloakAdminProperties;
+import cz.mp.building_diary.properties.KeycloakClientProperties;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -8,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(KeycloakAdminProperties.class)
+@EnableConfigurationProperties({KeycloakAdminProperties.class, KeycloakClientProperties.class})
 public class KeycloakAdminConfig {
 
     private final KeycloakAdminProperties properties;
