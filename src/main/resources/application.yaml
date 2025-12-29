@@ -53,6 +53,11 @@ keycloak:
     client-secret: JnP5M2xjPAWAoxaN7u32lfiWFhCJgGEa
     target-realm: building-diary
     default-role: USER
+  client:
+    server-url: http://localhost:8180
+    realm: building-diary
+    client-id: building-diary-client
+    client-secret: IGm1CRdduJgUTmfqAeE6JjbiU2gBUN5r
 
 springdoc:
   api-docs:

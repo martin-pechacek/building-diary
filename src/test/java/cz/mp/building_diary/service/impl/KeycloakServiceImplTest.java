@@ -2,6 +2,7 @@ package cz.mp.building_diary.service.impl;
 
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.properties.KeycloakAdminProperties;
+import cz.mp.building_diary.properties.KeycloakClientProperties;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -72,11 +73,14 @@ class KeycloakServiceImplTest {
     @Mock
     private Response response;
 
+    @Mock
+    private KeycloakClientProperties clientProperties;
+
     private KeycloakServiceImpl keycloakService;
 
     @BeforeEach
     void setUp() {
-        keycloakService = new KeycloakServiceImpl(keycloak, properties);
+        keycloakService = new KeycloakServiceImpl(keycloak, properties, clientProperties);
 
         when(properties.targetRealm()).thenReturn(TARGET_REALM);
         when(keycloak.realm(TARGET_REALM)).thenReturn(realmResource);

@@ -1,7 +1,7 @@
 package cz.mp.building_diary.mapper;
 
-import cz.mp.building_diary.controller.v1.dto.UserRegistrationRequestDto;
-import cz.mp.building_diary.controller.v1.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.dto.UserRegistrationRequestDto;
+import cz.mp.building_diary.dto.UserRegistrationResponseDto;
 import cz.mp.building_diary.entity.User;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mapstruct.Mapper;

@@ -1,6 +1,6 @@
 package cz.mp.building_diary.service.impl;
 
-import cz.mp.building_diary.controller.v1.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.dto.UserRegistrationResponseDto;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.building_diary.mapper.UserMapper;

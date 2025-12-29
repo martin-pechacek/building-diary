@@ -1,4 +1,4 @@
-package cz.mp.building_diary.controller.v1;
+package cz.mp.building_diary.controller;
 
 public abstract class BaseController {
 

@@ -1,6 +1,6 @@
 package cz.mp.building_diary.exception;
 
-import cz.mp.building_diary.controller.v1.dto.ErrorDto;
+import cz.mp.building_diary.dto.ErrorDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -35,6 +35,19 @@ public class GlobalExceptionHandler {
         };
 
         LOG.error("Registration failed: {}", ex.getMessage(), ex);
+
+        return ResponseEntity.status(status)
+                .body(new ErrorDto(ex.getMessage(), status.value()));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorDto> handleAuthenticationException(AuthenticationException ex) {
+        HttpStatus status = switch (ex.getErrorCode()) {
+            case INVALID_CREDENTIALS, USER_DISABLED, SESSION_EXPIRED -> HttpStatus.UNAUTHORIZED;
+            case KEYCLOAK_ERROR -> HttpStatus.SERVICE_UNAVAILABLE;
+        };
+
+        LOG.error("Authentication failed: {}", ex.getMessage(), ex);
 
         return ResponseEntity.status(status)
                 .body(new ErrorDto(ex.getMessage(), status.value()));

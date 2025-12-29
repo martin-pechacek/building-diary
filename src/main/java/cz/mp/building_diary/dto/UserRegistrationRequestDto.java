@@ -1,4 +1,4 @@
-package cz.mp.building_diary.controller.v1.dto;
+package cz.mp.building_diary.dto;
 
 import cz.mp.building_diary.validation.ValidPassword;
 import io.swagger.v3.oas.annotations.media.Schema;
