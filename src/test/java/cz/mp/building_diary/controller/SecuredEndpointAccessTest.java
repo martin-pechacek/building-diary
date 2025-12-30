@@ -2,6 +2,7 @@ package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.config.SecurityConfig;
 import cz.mp.building_diary.config.TestSecurityConfig;
+import cz.mp.building_diary.service.AuthenticationService;
 import cz.mp.building_diary.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +39,9 @@ class SecuredEndpointAccessTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private AuthenticationService authenticationService;
+
     @Nested
     @DisplayName("Public Endpoints - No Authentication Required")
     class PublicEndpoints {
@@ -56,7 +60,7 @@ class SecuredEndpointAccessTest {
         @Test
         @DisplayName("should allow access to /auth/login without authentication")
         void shouldAllowAccessToLoginWithoutAuthentication() throws Exception {
-            when(userService.login(any(), any())).thenReturn(loginResponse());
+            when(authenticationService.login(any(), any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -85,7 +89,7 @@ class SecuredEndpointAccessTest {
         @WithMockUser(roles = "USER")
         @DisplayName("should allow access to /auth/login even when authenticated")
         void shouldAllowAccessToLoginWhenAuthenticated() throws Exception {
-            when(userService.login(any(), any())).thenReturn(loginResponse());
+            when(authenticationService.login(any(), any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)

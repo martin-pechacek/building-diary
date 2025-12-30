@@ -5,6 +5,7 @@ import cz.mp.building_diary.dto.LoginRequestDto;
 import cz.mp.building_diary.dto.LoginResponseDto;
 import cz.mp.building_diary.dto.UserRegistrationRequestDto;
 import cz.mp.building_diary.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.service.AuthenticationService;
 import cz.mp.building_diary.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,9 +30,11 @@ public class AuthController extends BaseController {
     public static final String URL = BASE_PATH + "/auth";
 
     private final UserService userService;
+    private final AuthenticationService authenticationService;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, AuthenticationService authenticationService) {
         this.userService = userService;
+        this.authenticationService = authenticationService;
     }
 
     @PostMapping("/register")
@@ -94,7 +97,7 @@ public class AuthController extends BaseController {
             )
     })
     public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request, HttpSession session) {
-        return userService.login(request, session);
+        return authenticationService.login(request, session);
     }
 
     @PostMapping("/refresh")
@@ -120,6 +123,6 @@ public class AuthController extends BaseController {
             )
     })
     public LoginResponseDto refresh(HttpSession session) {
-        return userService.refreshSession(session);
+        return authenticationService.refreshSession(session);
     }
 }
