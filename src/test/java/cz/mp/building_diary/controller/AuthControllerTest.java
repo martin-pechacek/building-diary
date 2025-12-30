@@ -6,6 +6,7 @@ import cz.mp.building_diary.exception.AuthenticationException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
+import cz.mp.building_diary.service.AuthenticationService;
 import cz.mp.building_diary.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -44,6 +45,9 @@ class AuthControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private AuthenticationService authenticationService;
 
     @InjectMocks
     private AuthController authController;
@@ -159,7 +163,7 @@ class AuthControllerTest {
 
         @Test
         void shouldLoginSuccessfully() throws Exception {
-            when(userService.login(any(LoginRequestDto.class), any())).thenReturn(loginResponse());
+            when(authenticationService.login(any(LoginRequestDto.class), any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -176,7 +180,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).login(any(), any());
+            verify(authenticationService, never()).login(any(), any());
         }
 
         @Test
@@ -188,7 +192,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).login(any(), any());
+            verify(authenticationService, never()).login(any(), any());
         }
 
         @Test
@@ -200,12 +204,12 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).login(any(), any());
+            verify(authenticationService, never()).login(any(), any());
         }
 
         @Test
         void shouldReturnUnauthorizedWhenCredentialsAreInvalid() throws Exception {
-            when(userService.login(any(), any()))
+            when(authenticationService.login(any(), any()))
                     .thenThrow(new AuthenticationException("Invalid credentials", AuthenticationException.ErrorCode.INVALID_CREDENTIALS));
 
             mockMvc.perform(post(LOGIN_URL)
@@ -217,7 +221,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnServiceUnavailableWhenKeycloakFails() throws Exception {
-            when(userService.login(any(), any()))
+            when(authenticationService.login(any(), any()))
                     .thenThrow(new AuthenticationException("Keycloak unavailable", AuthenticationException.ErrorCode.KEYCLOAK_ERROR));
 
             mockMvc.perform(post(LOGIN_URL)

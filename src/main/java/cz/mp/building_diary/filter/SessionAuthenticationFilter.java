@@ -1,7 +1,7 @@
 package cz.mp.building_diary.filter;
 
 import cz.mp.building_diary.dto.SessionAuthenticationInfoDto;
-import cz.mp.building_diary.service.impl.UserServiceImpl;
+import cz.mp.building_diary.service.AuthenticationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
 
         HttpSession session = request.getSession(false);
         if (session != null) {
-            SessionAuthenticationInfoDto authInfo = (SessionAuthenticationInfoDto) session.getAttribute(UserServiceImpl.SESSION_AUTH_INFO);
+            SessionAuthenticationInfoDto authInfo = (SessionAuthenticationInfoDto) session.getAttribute(AuthenticationService.SESSION_AUTH_INFO);
             if (authInfo != null) {
                 if (!authInfo.isAccessTokenExpired()) {
                     setSecurityContext(authInfo);
