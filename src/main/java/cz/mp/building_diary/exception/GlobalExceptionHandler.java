@@ -53,6 +53,24 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), status.value()));
     }
 
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleProjectNotFoundException(ProjectNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.NOT_FOUND.value()));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.NOT_FOUND.value()));
+    }
+
+    @ExceptionHandler(ProjectStateException.class)
+    public ResponseEntity<ErrorDto> handleProjectStateException(ProjectStateException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);
