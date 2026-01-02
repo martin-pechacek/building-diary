@@ -22,17 +22,16 @@ public class ProjectStateMachineService {
 
     private final StateMachineFactory<ProjectStatus, ProjectEvent> stateMachineFactory;
 
-    public void tryTransition(Project project) {
-        ProjectEvent event = determineEvent(project);
-        if (event == null) {
-            return;
-        }
-
+    public boolean sendEvent(Project project, ProjectEvent event) {
         StateMachine<ProjectStatus, ProjectEvent> stateMachine = buildStateMachine(project);
-        boolean accepted = stateMachine.sendEvent(event);
+        ProjectStatus originalStatus = project.getStatus();
 
-        if (accepted) {
-            ProjectStatus newStatus = stateMachine.getState().getId();
+        stateMachine.sendEvent(event);
+
+        ProjectStatus newStatus = stateMachine.getState().getId();
+        boolean transitioned = !originalStatus.equals(newStatus);
+
+        if (transitioned) {
             project.setStatus(newStatus);
 
             switch (event) {
@@ -40,16 +39,12 @@ public class ProjectStateMachineService {
                 case COMPLETE -> project.setEndDate(LocalDate.now());
             }
 
-            LOG.info("Project {} transitioned from {} to {}", project.getId(), project.getStatus(), newStatus);
+            LOG.info("Project {} transitioned from {} to {}", project.getId(), originalStatus, newStatus);
+        } else {
+            LOG.info("Project {} transition with event {} rejected (guard failed)", project.getId(), event);
         }
-    }
 
-    private ProjectEvent determineEvent(Project project) {
-        return switch (project.getStatus()) {
-            case PLANNING -> ProjectEvent.START_WORK;
-            case IN_PROGRESS -> ProjectEvent.COMPLETE;
-            case COMPLETED -> null;
-        };
+        return transitioned;
     }
 
     private StateMachine<ProjectStatus, ProjectEvent> buildStateMachine(Project project) {

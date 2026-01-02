@@ -40,11 +40,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(
-                                "/api/*/auth/register",
-                                "/api/*/auth/login",
-                                "/api/*/auth/refresh"
-                        )
+                        .ignoringRequestMatchers("/api/**")
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")

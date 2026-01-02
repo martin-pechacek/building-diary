@@ -326,3 +326,39 @@ Public-facing client for user authentication:
 - **Authentication flow:** Direct access grants (password grant)
 - **Usage:** Called by `KeycloakServiceImpl.authenticate()` and `refreshToken()`
 - **Security:** Client secret stored server-side, never exposed to frontend
+
+## Construction Projects
+
+Projects represent construction/building projects with state machine-driven lifecycle.
+
+### Project Lifecycle
+
+Projects follow a state machine with three states:
+
+```
+┌──────────┐    START_WORK    ┌─────────────┐    COMPLETE    ┌───────────┐
+│ PLANNING │─────────────────>│ IN_PROGRESS │───────────────>│ COMPLETED │
+└──────────┘                  └─────────────┘                └───────────┘
+```
+
+### State Transition Guards
+
+#### Start Work (PLANNING → IN_PROGRESS)
+
+Requirements:
+- Construction manager assigned
+- Construction site address set
+- Building permit number filled
+
+#### Complete (IN_PROGRESS → COMPLETED)
+
+Requirements:
+- All diary entries filled (including non-working days)
+
+### Address Validation
+
+Address must have either:
+- **Parcel number** (eg new constructions), OR
+- **Street + street number** (eg reconstructions)
+
+Plus required fields: city, postal code, country (CZ or SK).

@@ -7,7 +7,9 @@ import cz.mp.building_diary.entity.Country;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.User;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
+import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.exception.UserNotFoundException;
+import cz.mp.building_diary.statemachine.events.ProjectEvent;
 import cz.mp.building_diary.mapper.AddressMapper;
 import cz.mp.building_diary.mapper.ProjectMapper;
 import cz.mp.building_diary.repository.ProjectRepository;
@@ -168,7 +170,6 @@ class ProjectServiceImplTest {
 
             assertThat(result).isEqualTo(projectDto);
             verify(projectMapper).updateFromDto(projectDto, project);
-            verify(stateMachineService).tryTransition(project);
             verify(projectRepository).save(project);
         }
 
@@ -247,6 +248,66 @@ class ProjectServiceImplTest {
 
             assertThatThrownBy(() -> projectService.archive(PROJECT_ID))
                     .isInstanceOf(ProjectNotFoundException.class);
+        }
+    }
+
+    @Nested
+    class Start {
+
+        @Test
+        void shouldStartProjectWhenTransitionAccepted() {
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(stateMachineService.sendEvent(project, ProjectEvent.START_WORK)).thenReturn(true);
+            when(projectRepository.save(project)).thenReturn(project);
+            when(projectMapper.toDto(project)).thenReturn(projectDto);
+
+            ProjectDto result = projectService.start(PROJECT_ID);
+
+            assertThat(result).isEqualTo(projectDto);
+            verify(stateMachineService).sendEvent(project, ProjectEvent.START_WORK);
+            verify(projectRepository).save(project);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenTransitionRejected() {
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(stateMachineService.sendEvent(project, ProjectEvent.START_WORK)).thenReturn(false);
+
+            assertThatThrownBy(() -> projectService.start(PROJECT_ID))
+                    .isInstanceOf(ProjectStateException.class)
+                    .hasMessageContaining("Cannot start project");
+        }
+    }
+
+    @Nested
+    class Complete {
+
+        @Test
+        void shouldCompleteProjectWhenTransitionAccepted() {
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)).thenReturn(true);
+            when(projectRepository.save(project)).thenReturn(project);
+            when(projectMapper.toDto(project)).thenReturn(projectDto);
+
+            ProjectDto result = projectService.complete(PROJECT_ID);
+
+            assertThat(result).isEqualTo(projectDto);
+            verify(stateMachineService).sendEvent(project, ProjectEvent.COMPLETE);
+            verify(projectRepository).save(project);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenTransitionRejected() {
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)).thenReturn(false);
+
+            assertThatThrownBy(() -> projectService.complete(PROJECT_ID))
+                    .isInstanceOf(ProjectStateException.class)
+                    .hasMessageContaining("Cannot complete project");
         }
     }
 
