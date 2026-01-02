@@ -16,4 +16,8 @@ public interface ProjectService {
     ProjectDto update(UUID id, ProjectDto dto);
 
     void archive(UUID id);
+
+    ProjectDto start(UUID id);
+
+    ProjectDto complete(UUID id);
 }

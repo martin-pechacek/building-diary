@@ -4,7 +4,9 @@ import cz.mp.building_diary.dto.ProjectDto;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.User;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
+import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.exception.UserNotFoundException;
+import cz.mp.building_diary.statemachine.events.ProjectEvent;
 import cz.mp.building_diary.mapper.AddressMapper;
 import cz.mp.building_diary.mapper.ProjectMapper;
 import cz.mp.building_diary.repository.ProjectRepository;
@@ -80,8 +82,6 @@ public class ProjectServiceImpl implements ProjectService {
             project.setConstructionManager(findUserById(dto.constructionManagerId()));
         }
 
-        stateMachineService.tryTransition(project);
-
         projectRepository.save(project);
         LOG.info("Project updated: {}", project.getId());
 
@@ -95,6 +95,34 @@ public class ProjectServiceImpl implements ProjectService {
         project.setArchived(true);
         projectRepository.save(project);
         LOG.info("Project archived: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public ProjectDto start(UUID id) {
+        Project project = findProjectById(id);
+
+        boolean accepted = stateMachineService.sendEvent(project, ProjectEvent.START_WORK);
+        if (!accepted) {
+            throw new ProjectStateException("Cannot start project. Ensure construction manager, address, and building permit are set.");
+        }
+
+        projectRepository.save(project);
+        return projectMapper.toDto(project);
+    }
+
+    @Override
+    @Transactional
+    public ProjectDto complete(UUID id) {
+        Project project = findProjectById(id);
+
+        boolean accepted = stateMachineService.sendEvent(project, ProjectEvent.COMPLETE);
+        if (!accepted) {
+            throw new ProjectStateException("Cannot complete project. Ensure all diary entries are filled.");
+        }
+
+        projectRepository.save(project);
+        return projectMapper.toDto(project);
     }
 
     private Project findProjectById(UUID id) {

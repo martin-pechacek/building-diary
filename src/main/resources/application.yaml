@@ -1,3 +1,10 @@
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true
+
 spring:
   application:
     name: building-diary

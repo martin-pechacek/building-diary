@@ -101,4 +101,34 @@ public class ProjectController extends BaseController {
     public void archive(@PathVariable UUID id) {
         projectService.archive(id);
     }
+
+    @PostMapping("/{id}/start")
+    @Operation(summary = "Start project construction")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project started"),
+            @ApiResponse(responseCode = "400", description = "Cannot start project - requirements not met",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public ProjectDto start(@PathVariable UUID id) {
+        return projectService.start(id);
+    }
+
+    @PostMapping("/{id}/complete")
+    @Operation(summary = "Complete project construction")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project completed"),
+            @ApiResponse(responseCode = "400", description = "Cannot complete project - requirements not met",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public ProjectDto complete(@PathVariable UUID id) {
+        return projectService.complete(id);
+    }
 }

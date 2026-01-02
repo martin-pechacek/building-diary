@@ -5,6 +5,7 @@ import cz.mp.building_diary.dto.ProjectDto;
 import cz.mp.building_diary.entity.Country;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
+import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.service.ProjectService;
 import cz.mp.building_diary.statemachine.states.ProjectStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -235,6 +236,76 @@ class ProjectControllerTest {
                     .when(projectService).archive(PROJECT_ID);
 
             mockMvc.perform(delete(URL + "/" + PROJECT_ID))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    class Start {
+
+        @Test
+        void shouldStartProjectSuccessfully() throws Exception {
+            ProjectDto response = createProjectResponse();
+
+            when(projectService.start(PROJECT_ID)).thenReturn(response);
+
+            mockMvc.perform(post(URL + "/" + PROJECT_ID + "/start"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(PROJECT_ID.toString()));
+
+            verify(projectService).start(PROJECT_ID);
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenRequirementsNotMet() throws Exception {
+            when(projectService.start(PROJECT_ID))
+                    .thenThrow(new ProjectStateException("Cannot start project"));
+
+            mockMvc.perform(post(URL + "/" + PROJECT_ID + "/start"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void shouldReturnNotFoundWhenProjectDoesNotExist() throws Exception {
+            when(projectService.start(PROJECT_ID))
+                    .thenThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID));
+
+            mockMvc.perform(post(URL + "/" + PROJECT_ID + "/start"))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    class Complete {
+
+        @Test
+        void shouldCompleteProjectSuccessfully() throws Exception {
+            ProjectDto response = createProjectResponse();
+
+            when(projectService.complete(PROJECT_ID)).thenReturn(response);
+
+            mockMvc.perform(post(URL + "/" + PROJECT_ID + "/complete"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(PROJECT_ID.toString()));
+
+            verify(projectService).complete(PROJECT_ID);
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenRequirementsNotMet() throws Exception {
+            when(projectService.complete(PROJECT_ID))
+                    .thenThrow(new ProjectStateException("Cannot complete project"));
+
+            mockMvc.perform(post(URL + "/" + PROJECT_ID + "/complete"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void shouldReturnNotFoundWhenProjectDoesNotExist() throws Exception {
+            when(projectService.complete(PROJECT_ID))
+                    .thenThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID));
+
+            mockMvc.perform(post(URL + "/" + PROJECT_ID + "/complete"))
                     .andExpect(status().isNotFound());
         }
     }
