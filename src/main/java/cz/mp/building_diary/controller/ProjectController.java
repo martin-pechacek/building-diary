@@ -1,7 +1,9 @@
 package cz.mp.building_diary.controller;
 
+import cz.mp.building_diary.dto.DiaryEntryDto;
 import cz.mp.building_diary.dto.ErrorDto;
 import cz.mp.building_diary.dto.ProjectDto;
+import cz.mp.building_diary.service.DiaryEntryService;
 import cz.mp.building_diary.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,6 +36,7 @@ public class ProjectController extends BaseController {
     public static final String URL = BASE_PATH + "/projects";
 
     private final ProjectService projectService;
+    private final DiaryEntryService diaryEntryService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -130,5 +133,23 @@ public class ProjectController extends BaseController {
     })
     public ProjectDto complete(@PathVariable UUID id) {
         return projectService.complete(id);
+    }
+
+    @PostMapping("/{id}/diaryEntry")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create diary entry for project")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Diary entry created"),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "409", description = "Diary entry already exists for this date",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public DiaryEntryDto createDiaryEntry(@PathVariable UUID id, @Valid @RequestBody DiaryEntryDto request) {
+        return diaryEntryService.create(id, request);
     }
 }

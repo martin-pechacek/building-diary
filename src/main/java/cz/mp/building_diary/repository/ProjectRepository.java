@@ -1,6 +1,7 @@
 package cz.mp.building_diary.repository;
 
 import cz.mp.building_diary.entity.Project;
+import cz.mp.building_diary.statemachine.states.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,11 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     @Query("SELECT p FROM Project p WHERE p.createdBy.id = :userId AND p.archived = true")
     List<Project> findArchivedByCreatedById(@Param("userId") UUID userId);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Project p " +
+            "WHERE p.id = :projectId AND (p.createdBy.id = :userId OR p.constructionManager.id = :userId)")
+    boolean hasAccess(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
+
+    @Query("SELECT p.status FROM Project p WHERE p.id = :projectId")
+    ProjectStatus findStatusById(@Param("projectId") UUID projectId);
 }

@@ -50,4 +50,14 @@ public class DiaryEntry extends BaseEntity {
 
     @OneToMany(mappedBy = "diaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MaterialUsage> materialUsages = new ArrayList<>();
+
+    public void addWorkforceEntry(WorkforceEntry entry) {
+        workforceEntries.add(entry);
+        entry.setDiaryEntry(this);
+    }
+
+    public void addMaterialUsage(MaterialUsage usage) {
+        materialUsages.add(usage);
+        usage.setDiaryEntry(this);
+    }
 }

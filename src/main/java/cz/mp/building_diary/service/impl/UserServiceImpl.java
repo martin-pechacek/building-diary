@@ -3,6 +3,7 @@ package cz.mp.building_diary.service.impl;
 import cz.mp.building_diary.dto.UserRegistrationRequestDto;
 import cz.mp.building_diary.dto.UserRegistrationResponseDto;
 import cz.mp.building_diary.entity.User;
+import cz.mp.building_diary.exception.UserNotFoundException;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.building_diary.mapper.UserMapper;
@@ -14,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +49,14 @@ public class UserServiceImpl implements UserService {
     private void validateEmailAvailable(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new UserRegistrationException("Email already exists", ErrorCode.EMAIL_EXISTS);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void userExists(UUID id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User not found: " + id);
         }
     }
 }
