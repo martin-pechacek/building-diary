@@ -14,4 +14,6 @@ public interface DiaryEntryService {
     DiaryEntryDto getByProjectIdAndDate(UUID projectId, LocalDate date);
 
     Page<DiaryEntryDto> getAllByProjectId(UUID projectId, Pageable pageable);
+
+    DiaryEntryDto update(UUID id, DiaryEntryDto dto);
 }
