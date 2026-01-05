@@ -123,7 +123,7 @@ class DiaryEntryServiceImplTest {
 
             assertThatThrownBy(() -> diaryEntryService.create(PROJECT_ID, diaryEntryDto))
                     .isInstanceOf(ProjectStateException.class)
-                    .hasMessageContaining("Cannot add diary entry to a completed project");
+                    .hasMessageContaining("Cannot add or modify diary entry in a completed project");
 
             verify(diaryEntryRepository, never()).save(any());
         }
@@ -226,6 +226,58 @@ class DiaryEntryServiceImplTest {
                     .isInstanceOf(ProjectNotFoundException.class);
 
             verify(diaryEntryRepository, never()).findByProjectIdOrderByDateDesc(any(), any());
+        }
+    }
+
+    @Nested
+    class Update {
+
+        @Test
+        void shouldUpdateDiaryEntrySuccessfully() {
+            when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.of(diaryEntry));
+            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
+            when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(diaryEntryDto);
+
+            DiaryEntryDto result = diaryEntryService.update(ENTRY_ID, diaryEntryDto);
+
+            assertThat(result).isEqualTo(diaryEntryDto);
+            verify(projectService).hasAccess(PROJECT_ID);
+            verify(diaryEntryMapper).updateEntity(diaryEntryDto, diaryEntry, workforceEntryMapper, materialUsageMapper);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenEntryNotFound() {
+            when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> diaryEntryService.update(ENTRY_ID, diaryEntryDto))
+                    .isInstanceOf(DiaryEntryNotFoundException.class)
+                    .hasMessageContaining("Diary entry not found: " + ENTRY_ID);
+
+            verify(diaryEntryMapper, never()).updateEntity(any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenNoAccess() {
+            when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.of(diaryEntry));
+            doThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID))
+                    .when(projectService).hasAccess(PROJECT_ID);
+
+            assertThatThrownBy(() -> diaryEntryService.update(ENTRY_ID, diaryEntryDto))
+                    .isInstanceOf(ProjectNotFoundException.class);
+
+            verify(diaryEntryMapper, never()).updateEntity(any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenProjectIsCompleted() {
+            when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.of(diaryEntry));
+            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> diaryEntryService.update(ENTRY_ID, diaryEntryDto))
+                    .isInstanceOf(ProjectStateException.class)
+                    .hasMessageContaining("Cannot add or modify diary entry in a completed project");
+
+            verify(diaryEntryMapper, never()).updateEntity(any(), any(), any(), any());
         }
     }
 

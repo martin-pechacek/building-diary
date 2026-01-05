@@ -29,11 +29,25 @@ public interface DiaryEntryMapper {
                         @Context WorkforceEntryMapper workforceMapper,
                         @Context MaterialUsageMapper materialMapper);
 
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "project", ignore = true)
+    @Mapping(target = "date", ignore = true)
+    @Mapping(target = "workforceEntries", ignore = true)
+    @Mapping(target = "materialUsages", ignore = true)
+    void updateEntity(DiaryEntryDto dto,
+                      @MappingTarget DiaryEntry entry,
+                      @Context WorkforceEntryMapper workforceMapper,
+                      @Context MaterialUsageMapper materialMapper);
+
     @AfterMapping
     default void mapCollections(DiaryEntryDto dto,
                                 @MappingTarget DiaryEntry entry,
                                 @Context WorkforceEntryMapper workforceMapper,
                                 @Context MaterialUsageMapper materialMapper) {
+        entry.getWorkforceEntries().clear();
+        entry.getMaterialUsages().clear();
+
         if (dto.workforceEntries() != null) {
             dto.workforceEntries().stream()
                     .map(workforceMapper::toEntity)

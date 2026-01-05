@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -83,6 +84,23 @@ public class DiaryEntryController {
     public DiaryEntryDto getDiaryEntry(@PathVariable UUID projectId,
                                        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return diaryEntryService.getByProjectIdAndDate(projectId, date);
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update a diary entry")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Diary entry updated"),
+            @ApiResponse(responseCode = "400", description = "Validation error or project completed",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Diary entry not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public DiaryEntryDto updateDiaryEntry(@PathVariable UUID projectId,
+                                          @PathVariable UUID id,
+                                          @Valid @RequestBody DiaryEntryDto request) {
+        return diaryEntryService.update(id, request);
     }
 }
 

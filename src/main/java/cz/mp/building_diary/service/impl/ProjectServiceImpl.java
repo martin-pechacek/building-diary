@@ -18,6 +18,9 @@ import cz.mp.building_diary.statemachine.states.ProjectStatus;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     public ProjectDto create(ProjectDto dto) {
         User currentUser = securityService.getCurrentUser();
 
@@ -54,12 +58,17 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "projects", key = "#id")
     public ProjectDto getById(UUID id) {
         return projectMapper.toDto(findProjectById(id));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = "projectsByUser",
+            key = "@securityService.getCurrentUser().id"
+    )
     public List<ProjectDto> getAll() {
         User currentUser = securityService.getCurrentUser();
         return projectRepository.findByCreatedById(currentUser.getId()).stream()
@@ -69,6 +78,10 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "projects", key = "#id"),
+            @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
+    })
     public ProjectDto update(UUID id, ProjectDto dto) {
         Project project = findProjectById(id);
 
@@ -90,6 +103,10 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "projects", key = "#id"),
+            @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
+    })
     public void archive(UUID id) {
         Project project = findProjectById(id);
         project.setArchived(true);
@@ -99,6 +116,10 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "projects", key = "#id"),
+            @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
+    })
     public ProjectDto start(UUID id) {
         Project project = findProjectById(id);
 
@@ -113,6 +134,10 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "projects", key = "#id"),
+            @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
+    })
     public ProjectDto complete(UUID id) {
         Project project = findProjectById(id);
 

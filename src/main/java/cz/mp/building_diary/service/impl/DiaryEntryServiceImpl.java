@@ -17,6 +17,9 @@ import cz.mp.building_diary.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -40,8 +43,12 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "diaryEntries", allEntries = true),
+            @CacheEvict(value = "diaryEntriesByProject", key = "#projectId.toString()")
+    })
     public DiaryEntryDto create(UUID projectId, DiaryEntryDto dto) {
-        checkConditions(projectId, dto);
+        checkConditions(projectId, dto, true);
 
         Project project = projectRepository.getReferenceById(projectId);
 
@@ -56,6 +63,10 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = "diaryEntries",
+            key = "#projectId.toString().concat(':').concat(#date.toString())"
+    )
     public DiaryEntryDto getByProjectIdAndDate(UUID projectId, LocalDate date) {
         projectService.hasAccess(projectId);
 
@@ -68,6 +79,11 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = "diaryEntriesByProject",
+            key = "#projectId.toString().concat(':').concat(#pageable.pageNumber.toString()).concat(':').concat(#pageable.pageSize.toString())"
+    )
+
     public Page<DiaryEntryDto> getAllByProjectId(UUID projectId, Pageable pageable) {
         projectService.hasAccess(projectId);
 
@@ -75,14 +91,33 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
                 .map(diaryEntryMapper::toDto);
     }
 
-    private void checkConditions(UUID projectId, DiaryEntryDto dto) {
+    @Override
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "diaryEntries", allEntries = true),
+            @CacheEvict(value = "diaryEntriesByProject", allEntries = true)
+    })
+    public DiaryEntryDto update(UUID id, DiaryEntryDto dto) {
+        DiaryEntry entry = diaryEntryRepository.findById(id)
+                .orElseThrow(() -> new DiaryEntryNotFoundException("Diary entry not found: " + id));
+
+        checkConditions(entry.getProject().getId(), dto, false);
+
+        diaryEntryMapper.updateEntity(dto, entry, workforceEntryMapper, materialUsageMapper);
+
+        LOG.info("Diary entry {} updated", id);
+
+        return diaryEntryMapper.toDto(entry);
+    }
+
+    private void checkConditions(UUID projectId, DiaryEntryDto dto, boolean checkDateUniqueness) {
         projectService.hasAccess(projectId);
         ProjectStatus status = projectRepository.findStatusById(projectId);
         if (status == ProjectStatus.COMPLETED) {
-            throw new ProjectStateException("Cannot add diary entry to a completed project");
+            throw new ProjectStateException("Cannot add or modify diary entry in a completed project");
         }
 
-        if (diaryEntryRepository.findByProjectIdAndDate(projectId, dto.date()).isPresent()) {
+        if (checkDateUniqueness && diaryEntryRepository.findByProjectIdAndDate(projectId, dto.date()).isPresent()) {
             throw new DiaryEntryAlreadyExistsException(
                     "Diary entry already exists for project " + projectId + " on date " + dto.date());
         }

@@ -5,6 +5,7 @@ import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
 import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
+import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.service.DiaryEntryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -200,6 +202,65 @@ class DiaryEntryControllerTest {
                     .andExpect(status().isOk());
 
             verify(diaryEntryService).getAllByProjectId(PROJECT_ID, PageRequest.of(2, 20));
+        }
+    }
+
+    @Nested
+    class Update {
+
+        @Test
+        void shouldUpdateDiaryEntrySuccessfully() throws Exception {
+            DiaryEntryDto request = createDiaryEntryRequest();
+            DiaryEntryDto response = createDiaryEntryResponse();
+
+            when(diaryEntryService.update(eq(ENTRY_ID), any())).thenReturn(response);
+
+            mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(ENTRY_ID.toString()))
+                    .andExpect(jsonPath("$.date").value(ENTRY_DATE.toString()));
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenDateIsNull() throws Exception {
+            DiaryEntryDto request = new DiaryEntryDto(
+                    null, null, null, "Summary", null, null, null, null, null, null, null
+            );
+
+            mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(diaryEntryService, never()).update(any(), any());
+        }
+
+        @Test
+        void shouldReturnNotFoundWhenEntryDoesNotExist() throws Exception {
+            DiaryEntryDto request = createDiaryEntryRequest();
+
+            when(diaryEntryService.update(eq(ENTRY_ID), any()))
+                    .thenThrow(new DiaryEntryNotFoundException("Diary entry not found: " + ENTRY_ID));
+
+            mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenProjectCompleted() throws Exception {
+            DiaryEntryDto request = createDiaryEntryRequest();
+
+            when(diaryEntryService.update(eq(ENTRY_ID), any()))
+                    .thenThrow(new ProjectStateException("Cannot add or modify diary entry in a completed project"));
+
+            mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(toJson(request)))
+                    .andExpect(status().isBadRequest());
         }
     }
 
