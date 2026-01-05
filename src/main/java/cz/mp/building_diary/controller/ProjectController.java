@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +23,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -151,5 +155,33 @@ public class ProjectController extends BaseController {
     })
     public DiaryEntryDto createDiaryEntry(@PathVariable UUID id, @Valid @RequestBody DiaryEntryDto request) {
         return diaryEntryService.create(id, request);
+    }
+
+    @GetMapping("/{id}/diaryEntry/{date}")
+    @Operation(summary = "Get diary entry by project and date")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Diary entry found"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Diary entry or project not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public DiaryEntryDto getDiaryEntry(@PathVariable UUID id, @PathVariable LocalDate date) {
+        return diaryEntryService.getByProjectIdAndDate(id, date);
+    }
+
+    @GetMapping("/{id}/diaryEntries")
+    @Operation(summary = "Get all diary entries for project with pagination")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Diary entries page"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public Page<DiaryEntryDto> getAllDiaryEntries(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") int page) {
+        return diaryEntryService.getAllByProjectId(id, PageRequest.of(page, 20));
     }
 }

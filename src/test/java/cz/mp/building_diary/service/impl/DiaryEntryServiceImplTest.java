@@ -1,17 +1,13 @@
 package cz.mp.building_diary.service.impl;
 
 import cz.mp.building_diary.dto.DiaryEntryDto;
-import cz.mp.building_diary.dto.MaterialUsageDto;
-import cz.mp.building_diary.dto.WorkforceEntryDto;
 import cz.mp.building_diary.entity.DiaryEntry;
-import cz.mp.building_diary.entity.MaterialUsage;
 import cz.mp.building_diary.entity.Project;
-import cz.mp.building_diary.entity.WorkforceEntry;
 import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
+import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
 import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.mapper.DiaryEntryMapper;
-import cz.mp.building_diary.mapper.ListMapper;
 import cz.mp.building_diary.mapper.MaterialUsageMapper;
 import cz.mp.building_diary.mapper.WorkforceEntryMapper;
 import cz.mp.building_diary.repository.DiaryEntryRepository;
@@ -24,10 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -66,9 +65,6 @@ class DiaryEntryServiceImplTest {
     @Mock
     private MaterialUsageMapper materialUsageMapper;
 
-    @Spy
-    private ListMapper listMapper = new ListMapper();
-
     @InjectMocks
     private DiaryEntryServiceImpl diaryEntryService;
 
@@ -98,7 +94,7 @@ class DiaryEntryServiceImplTest {
             when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
             when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE)).thenReturn(Optional.empty());
             when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
-            when(diaryEntryMapper.toEntity(diaryEntryDto)).thenReturn(diaryEntry);
+            when(diaryEntryMapper.toEntity(diaryEntryDto, workforceEntryMapper, materialUsageMapper)).thenReturn(diaryEntry);
             when(diaryEntryRepository.save(diaryEntry)).thenReturn(diaryEntry);
             when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(diaryEntryDto);
 
@@ -106,53 +102,8 @@ class DiaryEntryServiceImplTest {
 
             assertThat(result).isEqualTo(diaryEntryDto);
             verify(projectService).hasAccess(PROJECT_ID);
+            verify(diaryEntryMapper).toEntity(diaryEntryDto, workforceEntryMapper, materialUsageMapper);
             verify(diaryEntryRepository).save(diaryEntry);
-        }
-
-        @Test
-        void shouldCreateDiaryEntryWithWorkforceEntries() {
-            WorkforceEntryDto workforceDto = new WorkforceEntryDto(null, "Mason", "John", "Doe", BigDecimal.valueOf(8));
-            DiaryEntryDto dtoWithWorkforce = new DiaryEntryDto(
-                    null, null, ENTRY_DATE, "Summary", List.of(workforceDto), null, null, null, null
-            );
-            WorkforceEntry workforceEntry = new WorkforceEntry();
-
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
-            when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE)).thenReturn(Optional.empty());
-            when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
-            when(diaryEntryMapper.toEntity(dtoWithWorkforce)).thenReturn(diaryEntry);
-            when(workforceEntryMapper.toEntity(workforceDto)).thenReturn(workforceEntry);
-            when(diaryEntryRepository.save(diaryEntry)).thenReturn(diaryEntry);
-            when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(dtoWithWorkforce);
-
-            DiaryEntryDto result = diaryEntryService.create(PROJECT_ID, dtoWithWorkforce);
-
-            assertThat(result).isEqualTo(dtoWithWorkforce);
-            assertThat(diaryEntry.getWorkforceEntries()).contains(workforceEntry);
-            verify(workforceEntryMapper).toEntity(workforceDto);
-        }
-
-        @Test
-        void shouldCreateDiaryEntryWithMaterialUsages() {
-            MaterialUsageDto materialDto = new MaterialUsageDto(null, "Cement", BigDecimal.valueOf(50), "kg");
-            DiaryEntryDto dtoWithMaterial = new DiaryEntryDto(
-                    null, null, ENTRY_DATE, "Summary", null, List.of(materialDto), null, null, null
-            );
-            MaterialUsage materialUsage = new MaterialUsage();
-
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
-            when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE)).thenReturn(Optional.empty());
-            when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
-            when(diaryEntryMapper.toEntity(dtoWithMaterial)).thenReturn(diaryEntry);
-            when(materialUsageMapper.toEntity(materialDto)).thenReturn(materialUsage);
-            when(diaryEntryRepository.save(diaryEntry)).thenReturn(diaryEntry);
-            when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(dtoWithMaterial);
-
-            DiaryEntryDto result = diaryEntryService.create(PROJECT_ID, dtoWithMaterial);
-
-            assertThat(result).isEqualTo(dtoWithMaterial);
-            assertThat(diaryEntry.getMaterialUsages()).contains(materialUsage);
-            verify(materialUsageMapper).toEntity(materialDto);
         }
 
         @Test
@@ -191,12 +142,101 @@ class DiaryEntryServiceImplTest {
         }
     }
 
+    @Nested
+    class GetByProjectIdAndDate {
+
+        @Test
+        void shouldReturnDiaryEntrySuccessfully() {
+            when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
+                    .thenReturn(Optional.of(diaryEntry));
+            when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(diaryEntryDto);
+
+            DiaryEntryDto result = diaryEntryService.getByProjectIdAndDate(PROJECT_ID, ENTRY_DATE);
+
+            assertThat(result).isEqualTo(diaryEntryDto);
+            verify(projectService).hasAccess(PROJECT_ID);
+            verify(diaryEntryRepository).findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenEntryNotFound() {
+            when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> diaryEntryService.getByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
+                    .isInstanceOf(DiaryEntryNotFoundException.class)
+                    .hasMessageContaining("Diary entry not found");
+
+            verify(projectService).hasAccess(PROJECT_ID);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenNoAccess() {
+            doThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID))
+                    .when(projectService).hasAccess(PROJECT_ID);
+
+            assertThatThrownBy(() -> diaryEntryService.getByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
+                    .isInstanceOf(ProjectNotFoundException.class);
+
+            verify(diaryEntryRepository, never()).findByProjectIdAndDate(any(), any());
+        }
+    }
+
+    @Nested
+    class GetAllByProjectId {
+
+        @Test
+        void shouldReturnPaginatedDiaryEntries() {
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<DiaryEntry> entryPage = new PageImpl<>(List.of(diaryEntry), pageable, 1);
+
+            when(diaryEntryRepository.findByProjectIdOrderByDateDesc(PROJECT_ID, pageable))
+                    .thenReturn(entryPage);
+            when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(diaryEntryDto);
+
+            Page<DiaryEntryDto> result = diaryEntryService.getAllByProjectId(PROJECT_ID, pageable);
+
+            assertThat(result.getContent()).containsExactly(diaryEntryDto);
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            verify(projectService).hasAccess(PROJECT_ID);
+        }
+
+        @Test
+        void shouldReturnEmptyPageWhenNoEntries() {
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<DiaryEntry> emptyPage = Page.empty(pageable);
+
+            when(diaryEntryRepository.findByProjectIdOrderByDateDesc(PROJECT_ID, pageable))
+                    .thenReturn(emptyPage);
+
+            Page<DiaryEntryDto> result = diaryEntryService.getAllByProjectId(PROJECT_ID, pageable);
+
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalElements()).isZero();
+            verify(projectService).hasAccess(PROJECT_ID);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenNoAccess() {
+            Pageable pageable = PageRequest.of(0, 20);
+            doThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID))
+                    .when(projectService).hasAccess(PROJECT_ID);
+
+            assertThatThrownBy(() -> diaryEntryService.getAllByProjectId(PROJECT_ID, pageable))
+                    .isInstanceOf(ProjectNotFoundException.class);
+
+            verify(diaryEntryRepository, never()).findByProjectIdOrderByDateDesc(any(), any());
+        }
+    }
+
     private DiaryEntryDto createDiaryEntryDto() {
         return new DiaryEntryDto(
                 null,
                 null,
                 ENTRY_DATE,
                 "Daily summary",
+                null,
+                null,
                 null,
                 null,
                 null,
