@@ -71,6 +71,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
+    @ExceptionHandler(DiaryEntryAlreadyExistsException.class)
+    public ResponseEntity<ErrorDto> handleDiaryEntryAlreadyExistsException(DiaryEntryAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.CONFLICT.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);

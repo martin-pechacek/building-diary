@@ -99,8 +99,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldReturnProjectWhenFoundAndOwnedByCurrentUser() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(projectMapper.toDto(project)).thenReturn(projectDto);
 
             ProjectDto result = projectService.getById(PROJECT_ID);
@@ -110,7 +111,8 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProjectNotFound() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.empty());
+            when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(false);
 
             assertThatThrownBy(() -> projectService.getById(PROJECT_ID))
                     .isInstanceOf(ProjectNotFoundException.class)
@@ -119,11 +121,8 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProjectNotOwnedByCurrentUser() {
-            User otherUser = createUser(UUID.randomUUID(), "other@example.com");
-            project.setCreatedBy(otherUser);
-
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(false);
 
             assertThatThrownBy(() -> projectService.getById(PROJECT_ID))
                     .isInstanceOf(ProjectNotFoundException.class);
@@ -161,8 +160,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldUpdateProjectSuccessfully() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(projectRepository.save(project)).thenReturn(project);
             when(projectMapper.toDto(project)).thenReturn(projectDto);
 
@@ -183,8 +183,9 @@ class ProjectServiceImplTest {
                     null, null, null, null, null, null
             );
 
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(projectRepository.save(project)).thenReturn(project);
             when(projectMapper.toDto(project)).thenReturn(dtoWithAddress);
 
@@ -201,8 +202,9 @@ class ProjectServiceImplTest {
                     null, MANAGER_ID, null, null, null, null
             );
 
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
             when(projectRepository.save(project)).thenReturn(project);
             when(projectMapper.toDto(project)).thenReturn(dtoWithManager);
@@ -219,8 +221,9 @@ class ProjectServiceImplTest {
                     null, MANAGER_ID, null, null, null, null
             );
 
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> projectService.update(PROJECT_ID, dtoWithManager))
@@ -233,8 +236,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldArchiveProjectSuccessfully() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
 
             projectService.archive(PROJECT_ID);
 
@@ -244,7 +248,8 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProjectNotFound() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.empty());
+            when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(false);
 
             assertThatThrownBy(() -> projectService.archive(PROJECT_ID))
                     .isInstanceOf(ProjectNotFoundException.class);
@@ -256,8 +261,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldStartProjectWhenTransitionAccepted() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(stateMachineService.sendEvent(project, ProjectEvent.START_WORK)).thenReturn(true);
             when(projectRepository.save(project)).thenReturn(project);
             when(projectMapper.toDto(project)).thenReturn(projectDto);
@@ -271,8 +277,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenTransitionRejected() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(stateMachineService.sendEvent(project, ProjectEvent.START_WORK)).thenReturn(false);
 
             assertThatThrownBy(() -> projectService.start(PROJECT_ID))
@@ -286,8 +293,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldCompleteProjectWhenTransitionAccepted() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)).thenReturn(true);
             when(projectRepository.save(project)).thenReturn(project);
             when(projectMapper.toDto(project)).thenReturn(projectDto);
@@ -301,8 +309,9 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenTransitionRejected() {
-            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(securityService.getCurrentUser()).thenReturn(currentUser);
+            when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)).thenReturn(false);
 
             assertThatThrownBy(() -> projectService.complete(PROJECT_ID))

@@ -126,15 +126,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private Project findProjectById(UUID id) {
-        Project project = projectRepository.findById(id)
+        hasAccess(id);
+        return projectRepository.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException("Project not found: " + id));
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void hasAccess(UUID id) {
         User currentUser = securityService.getCurrentUser();
-        if (!project.getCreatedBy().getId().equals(currentUser.getId())) {
+        if (!projectRepository.hasAccess(id, currentUser.getId())) {
             throw new ProjectNotFoundException("Project not found: " + id);
         }
-
-        return project;
     }
 
     private User findUserById(UUID id) {

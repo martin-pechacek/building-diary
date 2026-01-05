@@ -20,4 +20,6 @@ public interface ProjectService {
     ProjectDto start(UUID id);
 
     ProjectDto complete(UUID id);
+
+    void hasAccess(UUID id);
 }
