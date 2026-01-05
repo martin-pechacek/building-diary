@@ -31,6 +31,14 @@ public record DiaryEntryDto(
         @Schema(description = "Daily summary")
         String summary,
 
+        @Schema(description = "Weather condition", example = "Sunny")
+        @NotNull(message = "Weather Condition is required")
+        String weatherCondition,
+
+        @Schema(description = "Temperature in Celsius", example = "22.5")
+        @NotNull(message = "Temperature is required")
+        Double temperature,
+
         @Schema(description = "Workforce entries")
         @Valid
         List<WorkforceEntryDto> workforceEntries,

@@ -45,6 +45,12 @@ public class DiaryEntry extends BaseEntity {
 
     private String summary;
 
+    @Column(nullable = false)
+    private String weatherCondition;
+
+    @Column(nullable = false)
+    private Double temperature;
+
     @OneToMany(mappedBy = "diaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkforceEntry> workforceEntries = new ArrayList<>();
 

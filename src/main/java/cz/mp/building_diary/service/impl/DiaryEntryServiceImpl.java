@@ -4,10 +4,10 @@ import cz.mp.building_diary.dto.DiaryEntryDto;
 import cz.mp.building_diary.entity.DiaryEntry;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
+import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
 import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.statemachine.states.ProjectStatus;
 import cz.mp.building_diary.mapper.DiaryEntryMapper;
-import cz.mp.building_diary.mapper.ListMapper;
 import cz.mp.building_diary.mapper.MaterialUsageMapper;
 import cz.mp.building_diary.mapper.WorkforceEntryMapper;
 import cz.mp.building_diary.repository.DiaryEntryRepository;
@@ -17,9 +17,12 @@ import cz.mp.building_diary.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -34,7 +37,6 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     private final DiaryEntryMapper diaryEntryMapper;
     private final WorkforceEntryMapper workforceEntryMapper;
     private final MaterialUsageMapper materialUsageMapper;
-    private final ListMapper listMapper;
 
     @Override
     @Transactional
@@ -43,18 +45,34 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
 
         Project project = projectRepository.getReferenceById(projectId);
 
-        DiaryEntry entry = diaryEntryMapper.toEntity(dto);
+        DiaryEntry entry = diaryEntryMapper.toEntity(dto, workforceEntryMapper, materialUsageMapper);
         entry.setProject(project);
-
-        // Map WorkforceEntryDto List to Entity List
-        listMapper.convertAndAdd(dto.workforceEntries(), workforceEntryMapper::toEntity, entry::addWorkforceEntry);
-        // Map MaterialUsageDto List to Entity List
-        listMapper.convertAndAdd(dto.materialUsages(), materialUsageMapper::toEntity, entry::addMaterialUsage);
 
         diaryEntryRepository.save(entry);
         LOG.info("Diary entry created for project {} on date {}", projectId, dto.date());
 
         return diaryEntryMapper.toDto(entry);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DiaryEntryDto getByProjectIdAndDate(UUID projectId, LocalDate date) {
+        projectService.hasAccess(projectId);
+
+        DiaryEntry entry = diaryEntryRepository.findByProjectIdAndDate(projectId, date)
+                .orElseThrow(() -> new DiaryEntryNotFoundException(
+                        "Diary entry not found for project " + projectId + " on date " + date));
+
+        return diaryEntryMapper.toDto(entry);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DiaryEntryDto> getAllByProjectId(UUID projectId, Pageable pageable) {
+        projectService.hasAccess(projectId);
+
+        return diaryEntryRepository.findByProjectIdOrderByDateDesc(projectId, pageable)
+                .map(diaryEntryMapper::toDto);
     }
 
     private void checkConditions(UUID projectId, DiaryEntryDto dto) {

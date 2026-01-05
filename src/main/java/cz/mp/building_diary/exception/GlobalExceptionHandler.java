@@ -77,6 +77,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.CONFLICT.value()));
     }
 
+    @ExceptionHandler(DiaryEntryNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleDiaryEntryNotFoundException(DiaryEntryNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.NOT_FOUND.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);

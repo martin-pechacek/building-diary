@@ -3,6 +3,8 @@ CREATE TABLE diary_entries (
     project_id UUID NOT NULL REFERENCES projects(id),
     date DATE NOT NULL,
     summary TEXT,
+    weather_condition VARCHAR(100) NOT NULL,
+    temperature FLOAT(3,1) NOT NULL;
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, date)

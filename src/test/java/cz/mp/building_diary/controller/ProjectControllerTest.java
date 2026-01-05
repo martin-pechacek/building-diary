@@ -1,13 +1,20 @@
 package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.dto.AddressDto;
+import cz.mp.building_diary.dto.DiaryEntryDto;
 import cz.mp.building_diary.dto.ProjectDto;
 import cz.mp.building_diary.entity.Country;
+import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
+import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
 import cz.mp.building_diary.exception.ProjectStateException;
+import cz.mp.building_diary.service.DiaryEntryService;
 import cz.mp.building_diary.service.ProjectService;
 import cz.mp.building_diary.statemachine.states.ProjectStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,6 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,6 +55,9 @@ class ProjectControllerTest {
 
     @Mock
     private ProjectService projectService;
+
+    @Mock
+    private DiaryEntryService diaryEntryService;
 
     @InjectMocks
     private ProjectController projectController;
@@ -310,10 +321,6 @@ class ProjectControllerTest {
         }
     }
 
-    private AddressDto createAddressDto() {
-        return new AddressDto("1234/5", null, null, "Praha", "11000", Country.CZ);
-    }
-
     private ProjectDto createProjectRequest() {
         return new ProjectDto(
                 null,
@@ -347,4 +354,9 @@ class ProjectControllerTest {
                 null
         );
     }
+
+    private AddressDto createAddressDto() {
+        return new AddressDto("1234/5", null, null, "Praha", "11000", Country.CZ);
+    }
+
 }
