@@ -83,6 +83,13 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.NOT_FOUND.value()));
     }
 
+    @ExceptionHandler(ExportException.class)
+    public ResponseEntity<ErrorDto> handleExportException(ExportException ex) {
+        LOG.error("Export failed: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);

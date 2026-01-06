@@ -3,7 +3,9 @@ package cz.mp.building_diary.controller;
 import cz.mp.building_diary.dto.ErrorDto;
 import cz.mp.building_diary.dto.ProjectDto;
 import cz.mp.building_diary.service.DiaryEntryService;
+import cz.mp.building_diary.service.DiaryExportService;
 import cz.mp.building_diary.service.ProjectService;
+import cz.mp.building_diary.service.export.ExportFormat;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,7 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +41,7 @@ public class ProjectController extends BaseController {
 
     private final ProjectService projectService;
     private final DiaryEntryService diaryEntryService;
+    private final DiaryExportService diaryExportService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -132,5 +138,27 @@ public class ProjectController extends BaseController {
     })
     public ProjectDto complete(@PathVariable UUID id) {
         return projectService.complete(id);
+    }
+
+    @GetMapping("/{id}/export/{format}")
+    @Operation(summary = "Export project diary to specified format (csv, pdf)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Export file generated"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "500", description = "Export failed",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public ResponseEntity<byte[]> export(@PathVariable UUID id, @PathVariable String format) {
+        ExportFormat exportFormat = ExportFormat.valueOf(format.toUpperCase());
+        byte[] data = diaryExportService.export(id, exportFormat);
+        MediaType contentType = exportFormat == ExportFormat.PDF ? MediaType.APPLICATION_PDF : MediaType.parseMediaType("text/csv");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"diary-export-" + id + "." + format.toLowerCase() + "\"")
+                .contentType(contentType)
+                .body(data);
     }
 }
