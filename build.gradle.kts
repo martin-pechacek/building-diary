@@ -41,6 +41,8 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("org.passay:passay:1.6.6")
     implementation("org.springframework.statemachine:spring-statemachine-core:4.0.0")
+    implementation("org.apache.commons:commons-csv:1.12.0")
+    implementation("org.apache.pdfbox:pdfbox:3.0.3")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")

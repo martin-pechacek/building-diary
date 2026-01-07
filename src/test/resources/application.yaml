@@ -1,3 +1,6 @@
+storage:
+  location: ./build/test-uploads
+
 spring:
   application:
     name: building-diary

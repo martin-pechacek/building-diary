@@ -81,7 +81,7 @@ class DiaryEntryControllerTest {
         @Test
         void shouldReturnBadRequestWhenDateIsNull() throws Exception {
             DiaryEntryDto request = new DiaryEntryDto(
-                    null, null, null, "Summary", null, null, null, null, null, null, null
+                    null, null, null, "Summary", null, null, null, null, null, null, null, null
             );
 
             mockMvc.perform(post(BASE_URL)
@@ -226,7 +226,7 @@ class DiaryEntryControllerTest {
         @Test
         void shouldReturnBadRequestWhenDateIsNull() throws Exception {
             DiaryEntryDto request = new DiaryEntryDto(
-                    null, null, null, "Summary", null, null, null, null, null, null, null
+                    null, null, null, "Summary", null, null, null, null, null, null, null, null
             );
 
             mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
@@ -276,6 +276,7 @@ class DiaryEntryControllerTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -288,6 +289,7 @@ class DiaryEntryControllerTest {
                 "Daily summary",
                 "Sunny",
                 22.5,
+                null,
                 null,
                 null,
                 null,

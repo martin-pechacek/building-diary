@@ -6,11 +6,14 @@ import cz.mp.building_diary.dto.ProjectDto;
 import cz.mp.building_diary.entity.Country;
 import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
 import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
+import cz.mp.building_diary.exception.ExportException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
 import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.service.DiaryEntryService;
+import cz.mp.building_diary.service.DiaryExportService;
 import cz.mp.building_diary.service.ProjectService;
+import cz.mp.building_diary.service.export.ExportFormat;
 import cz.mp.building_diary.statemachine.states.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -42,6 +45,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,6 +63,9 @@ class ProjectControllerTest {
 
     @Mock
     private DiaryEntryService diaryEntryService;
+
+    @Mock
+    private DiaryExportService diaryExportService;
 
     @InjectMocks
     private ProjectController projectController;
@@ -318,6 +326,56 @@ class ProjectControllerTest {
 
             mockMvc.perform(post(URL + "/" + PROJECT_ID + "/complete"))
                     .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    class Export {
+
+        @Test
+        void shouldExportToCsvSuccessfully() throws Exception {
+            byte[] csvData = "Date,Weather,Temperature\n2024-01-15,Sunny,22.5".getBytes();
+            when(diaryExportService.export(PROJECT_ID, ExportFormat.CSV)).thenReturn(csvData);
+
+            mockMvc.perform(get(URL + "/" + PROJECT_ID + "/export/csv"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType("text/csv"))
+                    .andExpect(header().string("Content-Disposition",
+                            "attachment; filename=\"diary-export-" + PROJECT_ID + ".csv\""));
+
+            verify(diaryExportService).export(PROJECT_ID, ExportFormat.CSV);
+        }
+
+        @Test
+        void shouldExportToPdfSuccessfully() throws Exception {
+            byte[] pdfData = "%PDF-1.4 test content".getBytes();
+            when(diaryExportService.export(PROJECT_ID, ExportFormat.PDF)).thenReturn(pdfData);
+
+            mockMvc.perform(get(URL + "/" + PROJECT_ID + "/export/pdf"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                    .andExpect(header().string("Content-Disposition",
+                            "attachment; filename=\"diary-export-" + PROJECT_ID + ".pdf\""));
+
+            verify(diaryExportService).export(PROJECT_ID, ExportFormat.PDF);
+        }
+
+        @Test
+        void shouldReturnNotFoundWhenProjectDoesNotExist() throws Exception {
+            when(diaryExportService.export(PROJECT_ID, ExportFormat.CSV))
+                    .thenThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID));
+
+            mockMvc.perform(get(URL + "/" + PROJECT_ID + "/export/csv"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void shouldReturnInternalServerErrorWhenExportFails() throws Exception {
+            when(diaryExportService.export(PROJECT_ID, ExportFormat.PDF))
+                    .thenThrow(new ExportException("Failed to export", new RuntimeException()));
+
+            mockMvc.perform(get(URL + "/" + PROJECT_ID + "/export/pdf"))
+                    .andExpect(status().isInternalServerError());
         }
     }
 

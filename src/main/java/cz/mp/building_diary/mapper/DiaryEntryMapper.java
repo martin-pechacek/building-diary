@@ -12,7 +12,7 @@ import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {WorkforceEntryMapper.class, MaterialUsageMapper.class})
+@Mapper(componentModel = "spring", uses = {WorkforceEntryMapper.class, MaterialUsageMapper.class, PhotoMapper.class})
 public interface DiaryEntryMapper {
 
     @Mapping(target = "projectId", source = "project.id")
@@ -25,6 +25,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "workforceEntries", ignore = true)
     @Mapping(target = "materialUsages", ignore = true)
+    @Mapping(target = "photos", ignore = true)
     DiaryEntry toEntity(DiaryEntryDto dto,
                         @Context WorkforceEntryMapper workforceMapper,
                         @Context MaterialUsageMapper materialMapper);
@@ -35,6 +36,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "date", ignore = true)
     @Mapping(target = "workforceEntries", ignore = true)
     @Mapping(target = "materialUsages", ignore = true)
+    @Mapping(target = "photos", ignore = true)
     void updateEntity(DiaryEntryDto dto,
                       @MappingTarget DiaryEntry entry,
                       @Context WorkforceEntryMapper workforceMapper,

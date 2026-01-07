@@ -57,6 +57,9 @@ public class DiaryEntry extends BaseEntity {
     @OneToMany(mappedBy = "diaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MaterialUsage> materialUsages = new ArrayList<>();
 
+    @OneToMany(mappedBy = "diaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Photo> photos = new ArrayList<>();
+
     public void addWorkforceEntry(WorkforceEntry entry) {
         workforceEntries.add(entry);
         entry.setDiaryEntry(this);
@@ -65,5 +68,10 @@ public class DiaryEntry extends BaseEntity {
     public void addMaterialUsage(MaterialUsage usage) {
         materialUsages.add(usage);
         usage.setDiaryEntry(this);
+    }
+
+    public void addPhoto(Photo photo) {
+        photos.add(photo);
+        photo.setDiaryEntry(this);
     }
 }
