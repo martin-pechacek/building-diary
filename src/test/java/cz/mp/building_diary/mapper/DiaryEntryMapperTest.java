@@ -23,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {DiaryEntryMapperImpl.class, WorkforceEntryMapperImpl.class, MaterialUsageMapperImpl.class})
+@ContextConfiguration(classes = {DiaryEntryMapperImpl.class, WorkforceEntryMapperImpl.class, MaterialUsageMapperImpl.class, PhotoMapperImpl.class})
 class DiaryEntryMapperTest {
 
     private static final UUID ENTRY_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
@@ -181,7 +181,7 @@ class DiaryEntryMapperTest {
         void shouldMapDtoToEntity() {
             DiaryEntryDto dto = new DiaryEntryDto(
                     ENTRY_ID, PROJECT_ID, ENTRY_DATE, "Daily summary",
-                    "Sunny", 22.5, null, null, USER_ID, null, null
+                    "Sunny", 22.5, null, null, null, USER_ID, null, null
             );
 
             DiaryEntry entity = mapper.toEntity(dto, workforceMapper, materialMapper);
@@ -199,7 +199,7 @@ class DiaryEntryMapperTest {
             );
             DiaryEntryDto dto = new DiaryEntryDto(
                     null, null, ENTRY_DATE, "Daily summary",
-                    "Sunny", 22.5, List.of(workforceDto), null, null, null, null
+                    "Sunny", 22.5, List.of(workforceDto), null, null, null, null, null
             );
 
             DiaryEntry entity = mapper.toEntity(dto, workforceMapper, materialMapper);
@@ -216,7 +216,7 @@ class DiaryEntryMapperTest {
             );
             DiaryEntryDto dto = new DiaryEntryDto(
                     null, null, ENTRY_DATE, "Daily summary",
-                    "Sunny", 22.5, null, List.of(materialDto), null, null, null
+                    "Sunny", 22.5, null, List.of(materialDto), null, null, null, null
             );
 
             DiaryEntry entity = mapper.toEntity(dto, workforceMapper, materialMapper);
@@ -236,7 +236,7 @@ class DiaryEntryMapperTest {
             );
             DiaryEntryDto dto = new DiaryEntryDto(
                     null, null, ENTRY_DATE, "Daily summary",
-                    "Sunny", 22.5, List.of(workforceDto), List.of(materialDto), null, null, null
+                    "Sunny", 22.5, List.of(workforceDto), List.of(materialDto), null, null, null, null
             );
 
             DiaryEntry entity = mapper.toEntity(dto, workforceMapper, materialMapper);
@@ -254,7 +254,7 @@ class DiaryEntryMapperTest {
         void shouldHandleNullCollections() {
             DiaryEntryDto dto = new DiaryEntryDto(
                     null, null, ENTRY_DATE, "Daily summary",
-                    null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null
             );
 
             DiaryEntry entity = mapper.toEntity(dto, workforceMapper, materialMapper);

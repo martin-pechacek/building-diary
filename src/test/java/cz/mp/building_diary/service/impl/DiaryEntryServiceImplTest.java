@@ -293,6 +293,7 @@ class DiaryEntryServiceImplTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }

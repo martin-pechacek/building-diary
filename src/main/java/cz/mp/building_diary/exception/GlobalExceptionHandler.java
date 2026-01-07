@@ -90,6 +90,25 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 
+    @ExceptionHandler(PhotoNotFoundException.class)
+    public ResponseEntity<ErrorDto> handlePhotoNotFoundException(PhotoNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.NOT_FOUND.value()));
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorDto> handleFileStorageException(FileStorageException ex) {
+        LOG.error("File storage error: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
+    @ExceptionHandler(InvalidFileTypeException.class)
+    public ResponseEntity<ErrorDto> handleInvalidFileTypeException(InvalidFileTypeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);

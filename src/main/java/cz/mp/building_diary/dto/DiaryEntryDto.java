@@ -47,6 +47,10 @@ public record DiaryEntryDto(
         @Valid
         List<MaterialUsageDto> materialUsages,
 
+        @Schema(description = "Photos")
+        @JsonProperty(access = READ_ONLY)
+        List<PhotoDto> photos,
+
         @Schema(description = "Created by user ID")
         @JsonProperty(access = READ_ONLY)
         UUID createdById,

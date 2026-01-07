@@ -362,3 +362,31 @@ Address must have either:
 - **Street + street number** (eg reconstructions)
 
 Plus required fields: city, postal code, country (CZ or SK).
+
+## Diary Export
+
+Diary entries from a project can be exported to CSV or PDF format.
+
+### Export Content
+
+Both formats include:
+- Project name and date range
+- Entry date and summary
+- Weather conditions and temperature
+- Workforce entries (role, name, hours)
+- Material usage (name, quantity, unit)
+
+## Photo Upload
+
+Attach photos to diary entries. Photos are stored on the filesystem with metadata in the database.
+
+**Allowed file types:** JPEG and PNG only (validated by file signature)
+
+### Configuration
+
+Configure photo storage location in `application.yaml`:
+
+```yaml
+storage:
+  location: ./uploads
+```
