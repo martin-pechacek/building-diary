@@ -30,7 +30,7 @@ public class WeatherServiceImpl implements WeatherService {
     public Optional<WeatherDto> getWeather(String postalCode, String country, LocalDate date) {
         try {
             double[] coordinates = getCoordinates(postalCode, country).orElseThrow(() -> new CoordinatesNotFoundException(
-                    "Coordinates not found for postal code " + postalCode + ", country " + country));
+                    "Coordinates not found for postal code " + postalCode + ", country " + country + ". Fill weather manually"));
 
             double lat = coordinates[0];
             double lon = coordinates[1];
