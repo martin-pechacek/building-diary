@@ -60,7 +60,7 @@ class SecuredEndpointAccessTest {
         @Test
         @DisplayName("should allow access to /auth/login without authentication")
         void shouldAllowAccessToLoginWithoutAuthentication() throws Exception {
-            when(authenticationService.login(any(), any())).thenReturn(loginResponse());
+            when(authenticationService.login(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +89,7 @@ class SecuredEndpointAccessTest {
         @WithMockUser(roles = "USER")
         @DisplayName("should allow access to /auth/login even when authenticated")
         void shouldAllowAccessToLoginWhenAuthenticated() throws Exception {
-            when(authenticationService.login(any(), any())).thenReturn(loginResponse());
+            when(authenticationService.login(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)

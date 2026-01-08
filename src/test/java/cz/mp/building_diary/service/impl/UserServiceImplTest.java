@@ -1,6 +1,6 @@
 package cz.mp.building_diary.service.impl;
 
-import cz.mp.building_diary.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.dto.UserRegistrationDto;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.building_diary.mapper.UserMapper;
@@ -57,9 +57,9 @@ class UserServiceImplTest {
             when(keycloakService.createUser(kcUser, PASSWORD)).thenReturn(KEYCLOAK_ID);
             when(userMapper.toEntity(request, KEYCLOAK_ID)).thenReturn(entity);
             when(userRepository.save(entity)).thenReturn(entity);
-            when(userMapper.toResponseDto(entity)).thenReturn(response);
+            when(userMapper.toDto(entity)).thenReturn(response);
 
-            UserRegistrationResponseDto result = userService.registerUser(request);
+            UserRegistrationDto result = userService.registerUser(request);
 
             assertThat(result).isNotNull();
             assertThat(result.userId()).isEqualTo(KEYCLOAK_ID);

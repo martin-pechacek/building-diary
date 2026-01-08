@@ -1,7 +1,7 @@
 package cz.mp.building_diary.statemachine.guard;
 
 import cz.mp.building_diary.entity.Address;
-import cz.mp.building_diary.entity.Country;
+import cz.mp.building_diary.enums.Country;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.User;
 import cz.mp.building_diary.statemachine.config.ProjectStateMachineConfig;

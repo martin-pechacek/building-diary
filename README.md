@@ -12,8 +12,8 @@ A web application for tracking construction and building project progress.
 - **Database:** PostgreSQL
 - **ORM:** Spring Data JPA
 - **Migrations:** Flyway
-- **Authentication:** Spring Security
-- **Session Storage:** Redis
+- **Authentication:** Spring Security + JWT (Keycloak)
+- **Caching:** Redis
 - **Web:** Spring MVC
 
 ## Prerequisites
@@ -46,7 +46,7 @@ The project includes a Docker Compose configuration in the `docker/` folder for 
 | Service    | Port | Credentials                    | Purpose              |
 |------------|------|--------------------------------|----------------------|
 | PostgreSQL | 5432 | `building_diary:building_diary`| Primary database     |
-| Redis      | 6379 | -                              | Session storage      |
+| Redis      | 6379 | -                              | Caching              |
 | Keycloak   | 8180 | `admin:admin`                  | Authentication server|
 
 ### Commands
@@ -237,7 +237,7 @@ The application expects the following services:
 | Service    | Default Port | Purpose          |
 |------------|--------------|------------------|
 | PostgreSQL | 5432         | Primary database |
-| Redis      | 6379         | Session storage  |
+| Redis      | 6379         | Caching          |
 
 Configure connection details in `application.yaml` or via environment variables.
 
@@ -250,59 +250,56 @@ Configure connection details in `application.yaml` or via environment variables.
 
 ## Authentication
 
-### Auth Flow (BFF Pattern)
+### Auth Flow (Stateless JWT)
 
-The application uses a Backend-for-Frontend (BFF) pattern where JWT tokens are stored server-side in Redis sessions, not exposed to the client.
+The application uses stateless JWT authentication. Tokens are issued by Keycloak and returned directly to the client.
 
 ```
-┌─────────┐         ┌─────────────┐         ┌──────────┐         ┌───────┐
-│ Client  │         │   Backend   │         │ Keycloak │         │ Redis │
-└────┬────┘         └──────┬──────┘         └────┬─────┘         └───┬───┘
-     │                     │                     │                   │
-     │ POST /auth/login    │                     │                   │
-     │ {email, password}   │                     │                   │
-     │────────────────────>│                     │                   │
-     │                     │                     │                   │
-     │                     │ Token Request       │                   │
-     │                     │ (password grant)    │                   │
-     │                     │────────────────────>│                   │
-     │                     │                     │                   │
-     │                     │ JWT Tokens          │                   │
-     │                     │<────────────────────│                   │
-     │                     │                     │                   │
-     │                     │ Store session       │                   │
-     │                     │ (tokens + claims)   │                   │
-     │                     │─────────────────────────────────────────>
-     │                     │                     │                   │
-     │ {username, roles}   │                     │                   │
-     │ + Session Cookie    │                     │                   │
-     │<────────────────────│                     │                   │
-     │                     │                     │                   │
-     │ GET /api/resource   │                     │                   │
-     │ (with cookie)       │                     │                   │
-     │────────────────────>│                     │                   │
-     │                     │                     │                   │
-     │                     │ Check session       │                   │
-     │                     │ expiration only     │                   │
-     │                     │<─────────────────────────────────────────
-     │                     │                     │                   │
-     │ Response            │                     │                   │
-     │<────────────────────│                     │                   │
+┌─────────┐         ┌─────────────┐         ┌──────────┐
+│ Client  │         │   Backend   │         │ Keycloak │
+└────┬────┘         └──────┬──────┘         └────┬─────┘
+     │                     │                     │
+     │ POST /auth/login    │                     │
+     │ {email, password}   │                     │
+     │────────────────────>│                     │
+     │                     │                     │
+     │                     │ Token Request       │
+     │                     │ (password grant)    │
+     │                     │────────────────────>│
+     │                     │                     │
+     │                     │ JWT Tokens          │
+     │                     │<────────────────────│
+     │                     │                     │
+     │ {email, accessToken,│                     │
+     │  refreshToken, roles}                     │
+     │<────────────────────│                     │
+     │                     │                     │
+     │ GET /api/resource   │                     │
+     │ Authorization:      │                     │
+     │ Bearer <token>      │                     │
+     │────────────────────>│                     │
+     │                     │                     │
+     │                     │ Validate JWT        │
+     │                     │ (decode claims)     │
+     │                     │                     │
+     │ Response            │                     │
+     │<────────────────────│                     │
 ```
 
 **Key points:**
-- Client never sees JWT tokens
-- Session stores: username, email, roles, token expiration, tokens (for refresh)
-- On each request: only expiration timestamp is checked (no Keycloak call)
-- On refresh: re-validates with Keycloak
+- Client receives and stores JWT tokens (access + refresh)
+- Stateless authentication - no server-side session storage
+- Access token sent via `Authorization: Bearer <token>` header
+- Token validation done locally by decoding JWT claims
+- Refresh token sent via `X-Refresh-Token` header to `/auth/refresh`
 
 ### Auth Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v1/auth/register` | POST | Register new user |
-| `/api/v1/auth/login` | POST | Authenticate and create session |
-| `/api/v1/auth/refresh` | POST | Refresh session tokens |
+| `/api/v1/auth/login` | POST | Authenticate and get JWT tokens |
+| `/api/v1/auth/refresh` | POST | Refresh tokens (via `X-Refresh-Token` header) |
 
 ### Keycloak Clients
 

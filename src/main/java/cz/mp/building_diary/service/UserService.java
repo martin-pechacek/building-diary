@@ -1,13 +1,12 @@
 package cz.mp.building_diary.service;
 
-import cz.mp.building_diary.dto.UserRegistrationRequestDto;
-import cz.mp.building_diary.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.dto.UserRegistrationDto;
 
 import java.util.UUID;
 
 public interface UserService {
 
-    UserRegistrationResponseDto registerUser(UserRegistrationRequestDto requestDto);
+    UserRegistrationDto registerUser(UserRegistrationDto dto);
 
     void userExists(UUID id);
 }

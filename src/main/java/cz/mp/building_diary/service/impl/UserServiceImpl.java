@@ -1,7 +1,6 @@
 package cz.mp.building_diary.service.impl;
 
-import cz.mp.building_diary.dto.UserRegistrationRequestDto;
-import cz.mp.building_diary.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.dto.UserRegistrationDto;
 import cz.mp.building_diary.entity.User;
 import cz.mp.building_diary.exception.UserNotFoundException;
 import cz.mp.building_diary.exception.UserRegistrationException;
@@ -30,20 +29,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserRegistrationResponseDto registerUser(UserRegistrationRequestDto request) {
-        validateEmailAvailable(request.email());
+    public UserRegistrationDto registerUser(UserRegistrationDto dto) {
+        validateEmailAvailable(dto.email());
 
         String keycloakId = keycloakService.createUser(
-                userMapper.toKeycloakUser(request),
-                request.password()
+                userMapper.toKeycloakUser(dto),
+                dto.password()
         );
 
-        User user = userMapper.toEntity(request, keycloakId);
+        User user = userMapper.toEntity(dto, keycloakId);
         userRepository.save(user);
 
-        LOG.info("User registered successfully: {}", request.email());
+        LOG.info("User registered successfully: {}", dto.email());
 
-        return userMapper.toResponseDto(user);
+        return userMapper.toDto(user);
     }
 
     private void validateEmailAvailable(String email) {

@@ -1,11 +1,9 @@
 package cz.mp.building_diary.util;
 
-import cz.mp.building_diary.dto.LoginRequestDto;
-import cz.mp.building_diary.dto.LoginResponseDto;
-import cz.mp.building_diary.dto.UserRegistrationRequestDto;
-import cz.mp.building_diary.dto.UserRegistrationResponseDto;
-import cz.mp.building_diary.entity.User;
 import cz.mp.building_diary.dto.KeycloakTokenDto;
+import cz.mp.building_diary.dto.LoginDto;
+import cz.mp.building_diary.dto.UserRegistrationDto;
+import cz.mp.building_diary.entity.User;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
@@ -24,12 +22,12 @@ public final class TestFixtures {
     private TestFixtures() {
     }
 
-    public static UserRegistrationRequestDto registrationRequest() {
-        return new UserRegistrationRequestDto(EMAIL, PASSWORD, FIRST_NAME, LAST_NAME);
+    public static UserRegistrationDto registrationRequest() {
+        return new UserRegistrationDto(null, EMAIL, PASSWORD, FIRST_NAME, LAST_NAME);
     }
 
-    public static UserRegistrationResponseDto registrationResponse() {
-        return new UserRegistrationResponseDto(KEYCLOAK_ID, EMAIL);
+    public static UserRegistrationDto registrationResponse() {
+        return new UserRegistrationDto(KEYCLOAK_ID, EMAIL, null, FIRST_NAME, LAST_NAME);
     }
 
     public static User user() {
@@ -44,12 +42,12 @@ public final class TestFixtures {
         return user;
     }
 
-    public static LoginRequestDto loginRequest() {
-        return new LoginRequestDto(EMAIL, PASSWORD);
+    public static LoginDto loginRequest() {
+        return new LoginDto(EMAIL, PASSWORD, null, null, null);
     }
 
-    public static LoginResponseDto loginResponse() {
-        return new LoginResponseDto(EMAIL, USER_ROLES);
+    public static LoginDto loginResponse() {
+        return new LoginDto(EMAIL, null, ACCESS_TOKEN, REFRESH_TOKEN, USER_ROLES);
     }
 
     public static KeycloakTokenDto keycloakTokenDto() {

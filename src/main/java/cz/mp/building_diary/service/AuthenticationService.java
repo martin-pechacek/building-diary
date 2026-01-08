@@ -1,14 +1,10 @@
 package cz.mp.building_diary.service;
 
-import cz.mp.building_diary.dto.LoginRequestDto;
-import cz.mp.building_diary.dto.LoginResponseDto;
-import jakarta.servlet.http.HttpSession;
+import cz.mp.building_diary.dto.LoginDto;
 
 public interface AuthenticationService {
 
-    String SESSION_AUTH_INFO = "auth_info";
+    LoginDto login(LoginDto dto);
 
-    LoginResponseDto login(LoginRequestDto request, HttpSession session);
-
-    LoginResponseDto refreshSession(HttpSession session);
+    LoginDto refresh(String refreshToken);
 }

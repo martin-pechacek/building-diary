@@ -3,7 +3,7 @@ package cz.mp.building_diary.service.impl;
 import cz.mp.building_diary.dto.AddressDto;
 import cz.mp.building_diary.dto.ProjectDto;
 import cz.mp.building_diary.entity.Address;
-import cz.mp.building_diary.entity.Country;
+import cz.mp.building_diary.enums.Country;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.User;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
@@ -32,7 +32,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

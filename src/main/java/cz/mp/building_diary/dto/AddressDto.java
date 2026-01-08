@@ -1,6 +1,6 @@
 package cz.mp.building_diary.dto;
 
-import cz.mp.building_diary.entity.Country;
+import cz.mp.building_diary.enums.Country;
 import cz.mp.building_diary.validation.ValidAddress;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

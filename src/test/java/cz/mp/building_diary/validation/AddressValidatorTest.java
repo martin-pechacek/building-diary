@@ -1,7 +1,7 @@
 package cz.mp.building_diary.validation;
 
 import cz.mp.building_diary.dto.AddressDto;
-import cz.mp.building_diary.entity.Country;
+import cz.mp.building_diary.enums.Country;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
