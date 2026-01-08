@@ -1,5 +1,6 @@
 package cz.mp.building_diary.entity;
 
+import cz.mp.building_diary.enums.Country;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

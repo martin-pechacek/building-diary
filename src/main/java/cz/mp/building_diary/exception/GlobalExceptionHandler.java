@@ -109,6 +109,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
+    @ExceptionHandler(CoordinatesNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleCoordinatesNotFoundException(CoordinatesNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);

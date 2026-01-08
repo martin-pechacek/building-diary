@@ -1,6 +1,7 @@
 package cz.mp.building_diary.service.impl;
 
 import cz.mp.building_diary.dto.DiaryEntryDto;
+import cz.mp.building_diary.entity.Address;
 import cz.mp.building_diary.entity.DiaryEntry;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
@@ -14,6 +15,7 @@ import cz.mp.building_diary.repository.DiaryEntryRepository;
 import cz.mp.building_diary.repository.ProjectRepository;
 import cz.mp.building_diary.service.DiaryEntryService;
 import cz.mp.building_diary.service.ProjectService;
+import cz.mp.building_diary.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     private final DiaryEntryRepository diaryEntryRepository;
     private final ProjectRepository projectRepository;
     private final ProjectService projectService;
+    private final WeatherService weatherService;
     private final DiaryEntryMapper diaryEntryMapper;
     private final WorkforceEntryMapper workforceEntryMapper;
     private final MaterialUsageMapper materialUsageMapper;
@@ -54,6 +57,19 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
 
         DiaryEntry entry = diaryEntryMapper.toEntity(dto, workforceEntryMapper, materialUsageMapper);
         entry.setProject(project);
+
+        Address address = project.getConstructionSiteAddress();
+        if (address != null && (entry.getTemperature() == null || entry.getWeatherCondition() == null)) {
+            weatherService.getWeather(address.getPostalCode(), address.getCountry().name(), entry.getDate())
+                    .ifPresent(weather -> {
+                        if (entry.getTemperature() == null) {
+                            entry.setTemperature(weather.temperature());
+                        }
+                        if (entry.getWeatherCondition() == null) {
+                            entry.setWeatherCondition(weather.condition());
+                        }
+                    });
+        }
 
         diaryEntryRepository.save(entry);
         LOG.info("Diary entry created for project {} on date {}", projectId, dto.date());

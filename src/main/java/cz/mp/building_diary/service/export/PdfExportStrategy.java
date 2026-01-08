@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class PdfExportStrategy implements DiaryExportStrategy {
@@ -171,9 +172,8 @@ public class PdfExportStrategy implements DiaryExportStrategy {
     }
 
     private String truncateText(String text, int maxLength) {
-        if (text == null || text.length() <= maxLength) {
-            return text;
-        }
-        return text.substring(0, maxLength) + "...";
+        return Optional.ofNullable(text)
+                .map(t -> t.length() <= maxLength ? t : t.substring(0, maxLength) + "...")
+                .orElse(null);
     }
 }

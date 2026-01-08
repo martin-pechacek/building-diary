@@ -1,10 +1,8 @@
 package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.dto.ErrorDto;
-import cz.mp.building_diary.dto.LoginRequestDto;
-import cz.mp.building_diary.dto.LoginResponseDto;
-import cz.mp.building_diary.dto.UserRegistrationRequestDto;
-import cz.mp.building_diary.dto.UserRegistrationResponseDto;
+import cz.mp.building_diary.dto.LoginDto;
+import cz.mp.building_diary.dto.UserRegistrationDto;
 import cz.mp.building_diary.service.AuthenticationService;
 import cz.mp.building_diary.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,11 +11,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +45,7 @@ public class AuthController extends BaseController {
             @ApiResponse(
                     responseCode = "201",
                     description = "User registered successfully",
-                    content = @Content(schema = @Schema(implementation = UserRegistrationResponseDto.class))
+                    content = @Content(schema = @Schema(implementation = UserRegistrationDto.class))
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -65,20 +63,20 @@ public class AuthController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))
             )
     })
-    public UserRegistrationResponseDto register(@Valid @RequestBody UserRegistrationRequestDto request) {
-        return userService.registerUser(request);
+    public UserRegistrationDto register(@Valid @RequestBody UserRegistrationDto dto) {
+        return userService.registerUser(dto);
     }
 
     @PostMapping("/login")
     @Operation(
             summary = "Authenticate user",
-            description = "Authenticates user via Keycloak and creates a session with tokens stored server-side"
+            description = "Authenticates user via Keycloak and returns JWT tokens"
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Login successful",
-                    content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
+                    content = @Content(schema = @Schema(implementation = LoginDto.class))
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -96,24 +94,24 @@ public class AuthController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))
             )
     })
-    public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request, HttpSession session) {
-        return authenticationService.login(request, session);
+    public LoginDto login(@Valid @RequestBody LoginDto dto) {
+        return authenticationService.login(dto);
     }
 
     @PostMapping("/refresh")
     @Operation(
-            summary = "Refresh session",
-            description = "Refreshes the access token using the stored refresh token. Re-validates with Keycloak."
+            summary = "Refresh token",
+            description = "Refreshes the access token using the refresh token"
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Session refreshed successfully",
-                    content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
+                    description = "Token refreshed successfully",
+                    content = @Content(schema = @Schema(implementation = LoginDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "No active session or session expired",
+                    description = "Invalid or expired refresh token",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
@@ -122,7 +120,7 @@ public class AuthController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))
             )
     })
-    public LoginResponseDto refresh(HttpSession session) {
-        return authenticationService.refreshSession(session);
+    public LoginDto refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
+        return authenticationService.refresh(refreshToken);
     }
 }

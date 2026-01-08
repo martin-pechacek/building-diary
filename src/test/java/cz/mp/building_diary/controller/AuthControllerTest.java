@@ -1,7 +1,7 @@
 package cz.mp.building_diary.controller;
 
-import cz.mp.building_diary.dto.LoginRequestDto;
-import cz.mp.building_diary.dto.UserRegistrationRequestDto;
+import cz.mp.building_diary.dto.LoginDto;
+import cz.mp.building_diary.dto.UserRegistrationDto;
 import cz.mp.building_diary.exception.AuthenticationException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.UserRegistrationException;
@@ -76,7 +76,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnBadRequestWhenEmailIsBlank() throws Exception {
-            UserRegistrationRequestDto request = new UserRegistrationRequestDto("", "SecurePass123!", "John", "Doe");
+            UserRegistrationDto request = new UserRegistrationDto(null, "", "SecurePass123!", "John", "Doe");
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -88,7 +88,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
-            UserRegistrationRequestDto request = new UserRegistrationRequestDto("invalid-email", "SecurePass123!", "John", "Doe");
+            UserRegistrationDto request = new UserRegistrationDto(null, "invalid-email", "SecurePass123!", "John", "Doe");
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -100,7 +100,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnBadRequestWhenPasswordTooShort() throws Exception {
-            UserRegistrationRequestDto request = new UserRegistrationRequestDto(EMAIL, "short", "John", "Doe");
+            UserRegistrationDto request = new UserRegistrationDto(null, EMAIL, "short", "John", "Doe");
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -135,7 +135,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnBadRequestWhenFirstNameIsBlank() throws Exception {
-            UserRegistrationRequestDto request = new UserRegistrationRequestDto(EMAIL, "SecurePass123!", "", "Doe");
+            UserRegistrationDto request = new UserRegistrationDto(null, EMAIL, "SecurePass123!", "", "Doe");
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -147,7 +147,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnBadRequestWhenLastNameIsBlank() throws Exception {
-            UserRegistrationRequestDto request = new UserRegistrationRequestDto(EMAIL, "SecurePass123!", "John", "");
+            UserRegistrationDto request = new UserRegistrationDto(null, EMAIL, "SecurePass123!", "John", "");
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -163,7 +163,7 @@ class AuthControllerTest {
 
         @Test
         void shouldLoginSuccessfully() throws Exception {
-            when(authenticationService.login(any(LoginRequestDto.class), any())).thenReturn(loginResponse());
+            when(authenticationService.login(any(LoginDto.class))).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -173,43 +173,43 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnBadRequestWhenEmailIsBlank() throws Exception {
-            LoginRequestDto request = new LoginRequestDto("", "SecurePass123!");
+            LoginDto request = new LoginDto("", "SecurePass123!", null, null, null);
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authenticationService, never()).login(any(), any());
+            verify(authenticationService, never()).login(any());
         }
 
         @Test
         void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
-            LoginRequestDto request = new LoginRequestDto("invalid-email", "SecurePass123!");
+            LoginDto request = new LoginDto("invalid-email", "SecurePass123!", null, null, null);
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authenticationService, never()).login(any(), any());
+            verify(authenticationService, never()).login(any());
         }
 
         @Test
         void shouldReturnBadRequestWhenPasswordIsBlank() throws Exception {
-            LoginRequestDto request = new LoginRequestDto(EMAIL, "");
+            LoginDto request = new LoginDto(EMAIL, "", null, null, null);
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authenticationService, never()).login(any(), any());
+            verify(authenticationService, never()).login(any());
         }
 
         @Test
         void shouldReturnUnauthorizedWhenCredentialsAreInvalid() throws Exception {
-            when(authenticationService.login(any(), any()))
+            when(authenticationService.login(any()))
                     .thenThrow(new AuthenticationException("Invalid credentials", AuthenticationException.ErrorCode.INVALID_CREDENTIALS));
 
             mockMvc.perform(post(LOGIN_URL)
@@ -221,7 +221,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnServiceUnavailableWhenKeycloakFails() throws Exception {
-            when(authenticationService.login(any(), any()))
+            when(authenticationService.login(any()))
                     .thenThrow(new AuthenticationException("Keycloak unavailable", AuthenticationException.ErrorCode.KEYCLOAK_ERROR));
 
             mockMvc.perform(post(LOGIN_URL)

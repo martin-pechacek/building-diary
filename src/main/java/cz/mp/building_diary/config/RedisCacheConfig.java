@@ -37,7 +37,9 @@ public class RedisCacheConfig {
                 .withCacheConfiguration("projects",
                         baseConfig.entryTtl(Duration.ofMinutes(120)))
                 .withCacheConfiguration("diaryEntries",
-                        baseConfig.entryTtl(Duration.ofMinutes(240)));
+                        baseConfig.entryTtl(Duration.ofMinutes(240)))
+                .withCacheConfiguration("weather",
+                        baseConfig.entryTtl(Duration.ofHours(24)));
     }
 
 }

@@ -1,11 +1,8 @@
 package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.dto.AddressDto;
-import cz.mp.building_diary.dto.DiaryEntryDto;
 import cz.mp.building_diary.dto.ProjectDto;
-import cz.mp.building_diary.entity.Country;
-import cz.mp.building_diary.exception.DiaryEntryAlreadyExistsException;
-import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
+import cz.mp.building_diary.enums.Country;
 import cz.mp.building_diary.exception.ExportException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
@@ -15,9 +12,6 @@ import cz.mp.building_diary.service.DiaryExportService;
 import cz.mp.building_diary.service.ProjectService;
 import cz.mp.building_diary.service.export.ExportFormat;
 import cz.mp.building_diary.statemachine.states.ProjectStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,7 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 

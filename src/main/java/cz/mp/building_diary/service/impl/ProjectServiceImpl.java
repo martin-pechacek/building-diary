@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -87,13 +88,14 @@ public class ProjectServiceImpl implements ProjectService {
 
         projectMapper.updateFromDto(dto, project);
 
-        if (dto.constructionSiteAddress() != null) {
-            addressMapper.updateFromDto(dto.constructionSiteAddress(), project.getConstructionSiteAddress());
-        }
+        Optional.ofNullable(dto.constructionSiteAddress())
+                .ifPresent(addressDto ->
+                        addressMapper.updateFromDto(addressDto, project.getConstructionSiteAddress())
+                );
 
-        if (dto.constructionManagerId() != null) {
-            project.setConstructionManager(findUserById(dto.constructionManagerId()));
-        }
+        Optional.ofNullable(dto.constructionManagerId())
+                .map(this::findUserById)
+                .ifPresent(project::setConstructionManager);
 
         projectRepository.save(project);
         LOG.info("Project updated: {}", project.getId());
@@ -123,8 +125,7 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDto start(UUID id) {
         Project project = findProjectById(id);
 
-        boolean accepted = stateMachineService.sendEvent(project, ProjectEvent.START_WORK);
-        if (!accepted) {
+        if (!stateMachineService.sendEvent(project, ProjectEvent.START_WORK)) {
             throw new ProjectStateException("Cannot start project. Ensure construction manager, address, and building permit are set.");
         }
 
@@ -141,8 +142,7 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDto complete(UUID id) {
         Project project = findProjectById(id);
 
-        boolean accepted = stateMachineService.sendEvent(project, ProjectEvent.COMPLETE);
-        if (!accepted) {
+        if (!stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)) {
             throw new ProjectStateException("Cannot complete project. Ensure all diary entries are filled.");
         }
 
