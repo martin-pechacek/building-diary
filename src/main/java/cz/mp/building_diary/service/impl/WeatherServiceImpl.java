@@ -1,5 +1,6 @@
 package cz.mp.building_diary.service.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import cz.mp.building_diary.dto.WeatherDto;
 import cz.mp.building_diary.enums.WeatherCodes;
 import cz.mp.building_diary.exception.CoordinatesNotFoundException;
@@ -102,6 +103,8 @@ public class WeatherServiceImpl implements WeatherService {
     private record WeatherResponse(DailyWeather daily) {
     }
 
-    private record DailyWeather(List<Double> temperature2mMean, List<Integer> weatherCode) {
+    private record DailyWeather(
+            @JsonProperty("temperature_2m_mean") List<Double> temperature2mMean,
+            @JsonProperty("weather_code") List<Integer> weatherCode) {
     }
 }
