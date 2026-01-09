@@ -1,8 +1,34 @@
 # Building Diary
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/martin-pechacek/building-diary/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/martin-pechacek/building-diary/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/martin-pechacek/building-diary/tree/main.svg?style=svg&circle-token=CCIPRJ_25iU6VBaMn7XQu7UXcFz43_9e21b05418cdd4a87f03081206b34464189bd18f)](https://dl.circleci.com/status-badge/redirect/gh/martin-pechacek/building-diary/tree/main)
 
 A web application for tracking construction and building project progress.
+
+## Table of Contents
+
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [Docker Setup](#docker-setup)
+  - [Commands](#commands)
+  - [Data Persistence](#data-persistence)
+  - [Keycloak Admin Console](#keycloak-admin-console)
+  - [Keycloak Setup](#keycloak-setup)
+  - [Testing JWT Retrieval](#testing-jwt-retrieval)
+- [Development](#development)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Authentication](#authentication)
+  - [Auth Flow (Stateless JWT)](#auth-flow-stateless-jwt)
+  - [Auth Endpoints](#auth-endpoints)
+  - [Keycloak Clients](#keycloak-clients)
+- [Construction Projects](#construction-projects)
+  - [Project Lifecycle](#project-lifecycle)
+  - [State Transition Guards](#state-transition-guards)
+  - [Address Validation](#address-validation)
+- [Diary Export](#diary-export)
+- [Photo Upload](#photo-upload)
+- [Weather Integration](#weather-integration)
 
 ## Tech Stack
 
@@ -10,11 +36,10 @@ A web application for tracking construction and building project progress.
 - **Language:** Java 25
 - **Build Tool:** Gradle (Kotlin DSL)
 - **Database:** PostgreSQL
-- **ORM:** Spring Data JPA
+- **ORM:** Spring Data JPA (Hibernate)
 - **Migrations:** Flyway
 - **Authentication:** Spring Security + JWT (Keycloak)
 - **Caching:** Redis
-- **Web:** Spring MVC
 
 ## Prerequisites
 
@@ -56,24 +81,9 @@ Start all services:
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-Stop all services:
-```bash
-docker compose -f docker/docker-compose.yml down
-```
-
-Stop and remove volumes (reset data):
-```bash
-docker compose -f docker/docker-compose.yml down -v
-```
-
 View logs:
 ```bash
 docker compose -f docker/docker-compose.yml logs -f [service_name]
-```
-
-Check service health:
-```bash
-docker compose -f docker/docker-compose.yml ps
 ```
 
 ### Data Persistence
@@ -315,13 +325,13 @@ The application uses two separate Keycloak clients with different purposes:
 Service account client for backend-to-Keycloak communication:
 - **Authentication flow:** Service accounts only
 - **Permissions:** `manage-users`, `view-users`, `query-users`
-- **Usage:** Called by `KeycloakServiceImpl.createUser()` and `deleteUser()`
+- **Usage:** Called by `KeycloakService.createUser()` and `deleteUser()`
 
 #### building-diary-client
 
 Public-facing client for user authentication:
 - **Authentication flow:** Direct access grants (password grant)
-- **Usage:** Called by `KeycloakServiceImpl.authenticate()` and `refreshToken()`
+- **Usage:** Called by `KeycloakService.authenticate()` and `refreshToken()`
 - **Security:** Client secret stored server-side, never exposed to frontend
 
 ## Construction Projects
@@ -387,3 +397,57 @@ Configure photo storage location in `application.yaml`:
 storage:
   location: ./uploads
 ```
+
+## Weather Integration
+
+Diary entries can automatically fetch weather data for the construction site location using the [Open-Meteo API](https://open-meteo.com/).
+
+### How It Works
+
+```
+┌─────────┐         ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│ Client  │         │   Backend   │         │  Geocoding  │         │  Weather    │
+│         │         │             │         │     API     │         │     API     │
+└────┬────┘         └──────┬──────┘         └──────┬──────┘         └──────┬──────┘
+     │                     │                       │                       │
+     │ Create diary entry  │                       │                       │
+     │ (city, country,date)│                       │                       │
+     │────────────────────>│                       │                       │
+     │                     │                       │                       │
+     │                     │ Get coordinates       │                       │
+     │                     │ for city/country      │                       │
+     │                     │──────────────────────>│                       │
+     │                     │                       │                       │
+     │                     │ {lat, lon}            │                       │
+     │                     │<──────────────────────│                       │
+     │                     │                       │                       │
+     │                     │ Get weather for       │                       │
+     │                     │ coordinates + date    │                       │
+     │                     │──────────────────────────────────────────────>│
+     │                     │                       │                       │
+     │                     │ {temperature,         │                       │
+     │                     │  weather_code}        │                       │
+     │                     │<──────────────────────────────────────────────│
+     │                     │                       │                       │
+     │ Entry with weather  │                       │                       │
+     │<────────────────────│                       │                       │
+```
+
+### Features
+
+- **Automatic geocoding:** City name is converted to coordinates via Open-Meteo Geocoding API
+- **Historical weather:** Past dates fetch from the Archive API
+- **Forecast weather:** Current/future dates fetch from the Forecast API
+- **Caching:** Results are cached in Redis to reduce API calls
+- **No API key required:** Open-Meteo is free and doesn't require authentication
+
+### Weather Data
+
+| Field | Description |
+|-------|-------------|
+| `temperature` | Mean daily temperature in Celsius |
+| `condition` | Weather condition (Clear, Cloudy, Rain, Snow, etc.) |
+
+### Supported Countries
+
+Weather lookup works for cities in Czech Republic (CZ) and Slovakia (SK).
