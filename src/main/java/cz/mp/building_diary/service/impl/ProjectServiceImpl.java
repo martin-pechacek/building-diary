@@ -71,6 +71,11 @@ public class ProjectServiceImpl implements ProjectService {
             key = "@securityService.getCurrentUser().id"
     )
     public List<ProjectDto> getAll() {
+        if (securityService.isAdmin()) {
+            return projectRepository.findAll().stream()
+                    .map(projectMapper::toDto)
+                    .toList();
+        }
         User currentUser = securityService.getCurrentUser();
         return projectRepository.findByCreatedById(currentUser.getId()).stream()
                 .map(projectMapper::toDto)
@@ -159,6 +164,9 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public void hasAccess(UUID id) {
+        if (securityService.isAdmin()) {
+            return;
+        }
         User currentUser = securityService.getCurrentUser();
         if (!projectRepository.hasAccess(id, currentUser.getId())) {
             throw new ProjectNotFoundException("Project not found: " + id);

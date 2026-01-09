@@ -319,6 +319,54 @@ class ProjectServiceImplTest {
         }
     }
 
+    @Nested
+    class AdminAccess {
+
+        @Test
+        void shouldAllowAdminToAccessAnyProject() {
+            when(securityService.isAdmin()).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(projectMapper.toDto(project)).thenReturn(projectDto);
+
+            ProjectDto result = projectService.getById(PROJECT_ID);
+
+            assertThat(result).isEqualTo(projectDto);
+        }
+
+        @Test
+        void shouldReturnAllProjectsForAdmin() {
+            Project anotherProject = new Project();
+            anotherProject.setId(UUID.randomUUID());
+            anotherProject.setName("Another Project");
+            ProjectDto anotherDto = new ProjectDto(
+                    anotherProject.getId(), "Another Project", null, null, null,
+                    null, null, null, null, null, null, null
+            );
+
+            when(securityService.isAdmin()).thenReturn(true);
+            when(projectRepository.findAll()).thenReturn(List.of(project, anotherProject));
+            when(projectMapper.toDto(project)).thenReturn(projectDto);
+            when(projectMapper.toDto(anotherProject)).thenReturn(anotherDto);
+
+            List<ProjectDto> result = projectService.getAll();
+
+            assertThat(result).hasSize(2);
+        }
+
+        @Test
+        void shouldAllowAdminToUpdateAnyProject() {
+            when(securityService.isAdmin()).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(projectRepository.save(project)).thenReturn(project);
+            when(projectMapper.toDto(project)).thenReturn(projectDto);
+
+            ProjectDto result = projectService.update(PROJECT_ID, projectDto);
+
+            assertThat(result).isEqualTo(projectDto);
+            verify(projectMapper).updateFromDto(projectDto, project);
+        }
+    }
+
     private User createUser(UUID id, String email) {
         User user = new User("kc-" + id, email, "Test", "User");
         user.setId(id);
