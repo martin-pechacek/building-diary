@@ -57,3 +57,12 @@ workflows:
       - test:
           requires:
             - build
+
+  main:
+    when:
+      equal: [ main, << pipeline.git.branch >> ]
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
