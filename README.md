@@ -4,6 +4,8 @@
 
 A web application for tracking construction and building project progress.
 
+**DISCLAIMER**: Documentation and tests were generated with the help of AI.
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)

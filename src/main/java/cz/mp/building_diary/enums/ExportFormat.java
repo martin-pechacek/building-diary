@@ -1,4 +1,4 @@
-package cz.mp.building_diary.service.export;
+package cz.mp.building_diary.enums;
 
 public enum ExportFormat {
     CSV,

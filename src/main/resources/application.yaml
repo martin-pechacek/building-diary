@@ -1,10 +1,3 @@
-server:
-  servlet:
-    session:
-      cookie:
-        same-site: lax
-        http-only: true
-
 spring:
   application:
     name: building-diary
@@ -45,12 +38,6 @@ spring:
     redis:
       host: localhost
       port: 6379
-
-  session:
-    store-type: redis
-    data:
-      redis:
-        namespace: building-diary:session
 
 keycloak:
   admin:

@@ -10,7 +10,7 @@ import cz.mp.building_diary.exception.ProjectStateException;
 import cz.mp.building_diary.service.DiaryEntryService;
 import cz.mp.building_diary.service.DiaryExportService;
 import cz.mp.building_diary.service.ProjectService;
-import cz.mp.building_diary.service.export.ExportFormat;
+import cz.mp.building_diary.enums.ExportFormat;
 import cz.mp.building_diary.statemachine.states.ProjectStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

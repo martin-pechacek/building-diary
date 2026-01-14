@@ -2,10 +2,9 @@ package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.dto.ErrorDto;
 import cz.mp.building_diary.dto.ProjectDto;
-import cz.mp.building_diary.service.DiaryEntryService;
 import cz.mp.building_diary.service.DiaryExportService;
 import cz.mp.building_diary.service.ProjectService;
-import cz.mp.building_diary.service.export.ExportFormat;
+import cz.mp.building_diary.enums.ExportFormat;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,7 +39,6 @@ public class ProjectController extends BaseController {
     public static final String URL = BASE_PATH + "/projects";
 
     private final ProjectService projectService;
-    private final DiaryEntryService diaryEntryService;
     private final DiaryExportService diaryExportService;
 
     @PostMapping

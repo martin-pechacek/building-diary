@@ -2,7 +2,7 @@ package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.dto.DiaryEntryDto;
 import cz.mp.building_diary.dto.ErrorDto;
-import cz.mp.building_diary.service.DiaryEntryService;
+import cz.mp.building_diary.facade.DiaryEntryFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,7 +36,7 @@ public class DiaryEntryController {
 
     public static final String URL = ProjectController.URL + "/{projectId}/diaryEntries";
 
-    private final DiaryEntryService diaryEntryService;
+    private final DiaryEntryFacade diaryEntryFacade;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -53,7 +53,7 @@ public class DiaryEntryController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class)))
     })
     public DiaryEntryDto createDiaryEntry(@PathVariable UUID projectId, @Valid @RequestBody DiaryEntryDto request) {
-        return diaryEntryService.create(projectId, request);
+        return diaryEntryFacade.createEntry(projectId, request);
     }
 
     @GetMapping
@@ -69,7 +69,7 @@ public class DiaryEntryController {
             @PathVariable UUID projectId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return diaryEntryService.getAllByProjectId(projectId, PageRequest.of(page, size));
+        return diaryEntryFacade.getEntries(projectId, PageRequest.of(page, size));
     }
 
     @GetMapping("/{date}")
@@ -83,7 +83,7 @@ public class DiaryEntryController {
     })
     public DiaryEntryDto getDiaryEntry(@PathVariable UUID projectId,
                                        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return diaryEntryService.getByProjectIdAndDate(projectId, date);
+        return diaryEntryFacade.getEntry(projectId, date);
     }
 
     @PutMapping("/{id}")
@@ -100,7 +100,7 @@ public class DiaryEntryController {
     public DiaryEntryDto updateDiaryEntry(@PathVariable UUID projectId,
                                           @PathVariable UUID id,
                                           @Valid @RequestBody DiaryEntryDto request) {
-        return diaryEntryService.update(id, request);
+        return diaryEntryFacade.updateEntry(id, request);
     }
 }
 
