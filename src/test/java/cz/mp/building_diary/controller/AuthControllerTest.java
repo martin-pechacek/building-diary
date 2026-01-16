@@ -6,7 +6,7 @@ import cz.mp.building_diary.exception.AuthenticationException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
-import cz.mp.building_diary.service.AuthenticationService;
+import cz.mp.building_diary.facade.AuthFacade;
 import cz.mp.building_diary.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -47,7 +47,7 @@ class AuthControllerTest {
     private UserService userService;
 
     @Mock
-    private AuthenticationService authenticationService;
+    private AuthFacade authFacade;
 
     @InjectMocks
     private AuthController authController;
@@ -70,8 +70,7 @@ class AuthControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(toJson(registrationRequest())))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.userId").value(KEYCLOAK_ID))
-                    .andExpect(jsonPath("$.email").value(EMAIL));
+                    .andExpect(jsonPath("$.accessToken").value(any()));
         }
 
         @Test
@@ -163,7 +162,7 @@ class AuthControllerTest {
 
         @Test
         void shouldLoginSuccessfully() throws Exception {
-            when(authenticationService.login(any(LoginDto.class))).thenReturn(loginResponse());
+            when(authFacade.login(any(LoginDto.class))).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -180,7 +179,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authenticationService, never()).login(any());
+            verify(authFacade, never()).login(any());
         }
 
         @Test
@@ -192,7 +191,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authenticationService, never()).login(any());
+            verify(authFacade, never()).login(any());
         }
 
         @Test
@@ -204,12 +203,12 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authenticationService, never()).login(any());
+            verify(authFacade, never()).login(any());
         }
 
         @Test
         void shouldReturnUnauthorizedWhenCredentialsAreInvalid() throws Exception {
-            when(authenticationService.login(any()))
+            when(authFacade.login(any()))
                     .thenThrow(new AuthenticationException("Invalid credentials", AuthenticationException.ErrorCode.INVALID_CREDENTIALS));
 
             mockMvc.perform(post(LOGIN_URL)
@@ -221,7 +220,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnServiceUnavailableWhenKeycloakFails() throws Exception {
-            when(authenticationService.login(any()))
+            when(authFacade.login(any()))
                     .thenThrow(new AuthenticationException("Keycloak unavailable", AuthenticationException.ErrorCode.KEYCLOAK_ERROR));
 
             mockMvc.perform(post(LOGIN_URL)

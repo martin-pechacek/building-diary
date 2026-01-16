@@ -1,10 +1,11 @@
-package cz.mp.building_diary.service.export;
+package cz.mp.building_diary.strategy.export;
 
 import cz.mp.building_diary.entity.DiaryEntry;
 import cz.mp.building_diary.entity.MaterialUsage;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.WorkforceEntry;
 import cz.mp.building_diary.exception.ExportException;
+import cz.mp.building_diary.strategy.DiaryExportStrategy;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;

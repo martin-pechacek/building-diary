@@ -3,8 +3,7 @@ package cz.mp.building_diary.controller;
 import cz.mp.building_diary.dto.ErrorDto;
 import cz.mp.building_diary.dto.LoginDto;
 import cz.mp.building_diary.dto.UserRegistrationDto;
-import cz.mp.building_diary.service.AuthenticationService;
-import cz.mp.building_diary.service.UserService;
+import cz.mp.building_diary.facade.AuthFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,23 +23,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(AuthController.URL)
 @Tag(name = "Authentication", description = "User authentication and registration endpoints")
+@RequiredArgsConstructor
 public class AuthController extends BaseController {
 
     public static final String URL = BASE_PATH + "/auth";
 
-    private final UserService userService;
-    private final AuthenticationService authenticationService;
-
-    public AuthController(UserService userService, AuthenticationService authenticationService) {
-        this.userService = userService;
-        this.authenticationService = authenticationService;
-    }
+    private final AuthFacade authFacade;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
             summary = "Register a new user",
-            description = "Creates a new user account in Keycloak with the default USER role"
+            description = "Creates a new user account in Keycloak with the default USER role and automatically logs in"
     )
     @ApiResponses({
             @ApiResponse(
@@ -63,8 +58,8 @@ public class AuthController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))
             )
     })
-    public UserRegistrationDto register(@Valid @RequestBody UserRegistrationDto dto) {
-        return userService.registerUser(dto);
+    public LoginDto register(@Valid @RequestBody UserRegistrationDto dto) {
+        return authFacade.register(dto);
     }
 
     @PostMapping("/login")
@@ -95,7 +90,7 @@ public class AuthController extends BaseController {
             )
     })
     public LoginDto login(@Valid @RequestBody LoginDto dto) {
-        return authenticationService.login(dto);
+        return authFacade.login(dto);
     }
 
     @PostMapping("/refresh")
@@ -121,6 +116,6 @@ public class AuthController extends BaseController {
             )
     })
     public LoginDto refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
-        return authenticationService.refresh(refreshToken);
+        return authFacade.refresh(refreshToken);
     }
 }

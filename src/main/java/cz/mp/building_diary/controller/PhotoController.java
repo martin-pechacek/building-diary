@@ -2,7 +2,7 @@ package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.dto.ErrorDto;
 import cz.mp.building_diary.dto.PhotoDto;
-import cz.mp.building_diary.service.PhotoService;
+import cz.mp.building_diary.facade.impl.DiaryEntryFacadeImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,7 +35,7 @@ public class PhotoController extends BaseController {
 
     public static final String URL = BASE_PATH + "/photos";
 
-    private final PhotoService photoService;
+    private final DiaryEntryFacadeImpl diaryEntryFacade;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,7 +52,7 @@ public class PhotoController extends BaseController {
     public PhotoDto upload(@RequestParam UUID diaryEntryId,
                            @RequestParam MultipartFile file,
                            @RequestParam(required = false) String description) {
-        return photoService.upload(diaryEntryId, file, description);
+        return diaryEntryFacade.uploadPhoto(diaryEntryId, file, description);
     }
 
     @GetMapping("/{id}")
@@ -65,7 +65,7 @@ public class PhotoController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class)))
     })
     public ResponseEntity<Resource> download(@PathVariable UUID id) {
-        Resource resource = photoService.getFile(id);
+        Resource resource = diaryEntryFacade.getPhoto(id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
@@ -82,6 +82,6 @@ public class PhotoController extends BaseController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class)))
     })
     public void delete(@PathVariable UUID id) {
-        photoService.delete(id);
+        diaryEntryFacade.deletePhoto(id);
     }
 }

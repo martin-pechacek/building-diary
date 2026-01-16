@@ -1,6 +1,6 @@
 package cz.mp.building_diary.service;
 
-import cz.mp.building_diary.service.export.ExportFormat;
+import cz.mp.building_diary.enums.ExportFormat;
 
 import java.util.UUID;
 

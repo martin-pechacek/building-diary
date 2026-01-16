@@ -1,9 +1,9 @@
 package cz.mp.building_diary.config;
 
-import cz.mp.building_diary.service.export.CsvExportStrategy;
-import cz.mp.building_diary.service.export.DiaryExportStrategy;
-import cz.mp.building_diary.service.export.ExportFormat;
-import cz.mp.building_diary.service.export.PdfExportStrategy;
+import cz.mp.building_diary.strategy.export.CsvExportStrategy;
+import cz.mp.building_diary.strategy.DiaryExportStrategy;
+import cz.mp.building_diary.enums.ExportFormat;
+import cz.mp.building_diary.strategy.export.PdfExportStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
