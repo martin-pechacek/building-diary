@@ -6,7 +6,7 @@ import cz.mp.building_diary.exception.DiaryEntryNotFoundException;
 import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
 import cz.mp.building_diary.exception.ProjectStateException;
-import cz.mp.building_diary.service.DiaryEntryService;
+import cz.mp.building_diary.facade.DiaryEntryFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,7 @@ class DiaryEntryControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private DiaryEntryService diaryEntryService;
+    private DiaryEntryFacade diaryEntryFacade;
 
     @InjectMocks
     private DiaryEntryController diaryEntryController;
@@ -68,7 +68,7 @@ class DiaryEntryControllerTest {
             DiaryEntryDto request = createDiaryEntryRequest();
             DiaryEntryDto response = createDiaryEntryResponse();
 
-            when(diaryEntryService.create(eq(PROJECT_ID), any())).thenReturn(response);
+            when(diaryEntryFacade.createEntry(eq(PROJECT_ID), any())).thenReturn(response);
 
             mockMvc.perform(post(BASE_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -89,14 +89,14 @@ class DiaryEntryControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(diaryEntryService, never()).create(any(), any());
+            verify(diaryEntryFacade, never()).createEntry(any(), any());
         }
 
         @Test
         void shouldReturnNotFoundWhenProjectDoesNotExist() throws Exception {
             DiaryEntryDto request = createDiaryEntryRequest();
 
-            when(diaryEntryService.create(eq(PROJECT_ID), any()))
+            when(diaryEntryFacade.createEntry(eq(PROJECT_ID), any()))
                     .thenThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID));
 
             mockMvc.perform(post(BASE_URL)
@@ -109,7 +109,7 @@ class DiaryEntryControllerTest {
         void shouldReturnConflictWhenEntryAlreadyExists() throws Exception {
             DiaryEntryDto request = createDiaryEntryRequest();
 
-            when(diaryEntryService.create(eq(PROJECT_ID), any()))
+            when(diaryEntryFacade.createEntry(eq(PROJECT_ID), any()))
                     .thenThrow(new DiaryEntryAlreadyExistsException("Diary entry already exists"));
 
             mockMvc.perform(post(BASE_URL)
@@ -126,7 +126,7 @@ class DiaryEntryControllerTest {
         void shouldReturnDiaryEntrySuccessfully() throws Exception {
             DiaryEntryDto response = createDiaryEntryResponse();
 
-            when(diaryEntryService.getByProjectIdAndDate(PROJECT_ID, ENTRY_DATE)).thenReturn(response);
+            when(diaryEntryFacade.getEntry(PROJECT_ID, ENTRY_DATE)).thenReturn(response);
 
             mockMvc.perform(get(BASE_URL + "/" + ENTRY_DATE))
                     .andExpect(status().isOk())
@@ -136,7 +136,7 @@ class DiaryEntryControllerTest {
 
         @Test
         void shouldReturnNotFoundWhenEntryDoesNotExist() throws Exception {
-            when(diaryEntryService.getByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
+            when(diaryEntryFacade.getEntry(PROJECT_ID, ENTRY_DATE))
                     .thenThrow(new DiaryEntryNotFoundException("Diary entry not found"));
 
             mockMvc.perform(get(BASE_URL + "/" + ENTRY_DATE))
@@ -145,7 +145,7 @@ class DiaryEntryControllerTest {
 
         @Test
         void shouldReturnNotFoundWhenProjectDoesNotExist() throws Exception {
-            when(diaryEntryService.getByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
+            when(diaryEntryFacade.getEntry(PROJECT_ID, ENTRY_DATE))
                     .thenThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID));
 
             mockMvc.perform(get(BASE_URL + "/" + ENTRY_DATE))
@@ -161,7 +161,7 @@ class DiaryEntryControllerTest {
             DiaryEntryDto response = createDiaryEntryResponse();
             Page<DiaryEntryDto> page = new PageImpl<>(List.of(response), PageRequest.of(0, 20), 1);
 
-            when(diaryEntryService.getAllByProjectId(eq(PROJECT_ID), any())).thenReturn(page);
+            when(diaryEntryFacade.getEntries(eq(PROJECT_ID), any())).thenReturn(page);
 
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
@@ -174,7 +174,7 @@ class DiaryEntryControllerTest {
         void shouldReturnEmptyPageWhenNoEntries() throws Exception {
             Page<DiaryEntryDto> emptyPage = Page.empty(PageRequest.of(0, 20));
 
-            when(diaryEntryService.getAllByProjectId(eq(PROJECT_ID), any())).thenReturn(emptyPage);
+            when(diaryEntryFacade.getEntries(eq(PROJECT_ID), any())).thenReturn(emptyPage);
 
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
@@ -184,7 +184,7 @@ class DiaryEntryControllerTest {
 
         @Test
         void shouldReturnNotFoundWhenProjectDoesNotExist() throws Exception {
-            when(diaryEntryService.getAllByProjectId(eq(PROJECT_ID), any()))
+            when(diaryEntryFacade.getEntries(eq(PROJECT_ID), any()))
                     .thenThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID));
 
             mockMvc.perform(get(BASE_URL))
@@ -195,13 +195,13 @@ class DiaryEntryControllerTest {
         void shouldPassPageParameter() throws Exception {
             Page<DiaryEntryDto> emptyPage = Page.empty(PageRequest.of(2, 20));
 
-            when(diaryEntryService.getAllByProjectId(eq(PROJECT_ID), eq(PageRequest.of(2, 20))))
+            when(diaryEntryFacade.getEntries(eq(PROJECT_ID), eq(PageRequest.of(2, 20))))
                     .thenReturn(emptyPage);
 
             mockMvc.perform(get(BASE_URL + "?page=2"))
                     .andExpect(status().isOk());
 
-            verify(diaryEntryService).getAllByProjectId(PROJECT_ID, PageRequest.of(2, 20));
+            verify(diaryEntryFacade).getEntries(PROJECT_ID, PageRequest.of(2, 20));
         }
     }
 
@@ -213,7 +213,7 @@ class DiaryEntryControllerTest {
             DiaryEntryDto request = createDiaryEntryRequest();
             DiaryEntryDto response = createDiaryEntryResponse();
 
-            when(diaryEntryService.update(eq(ENTRY_ID), any())).thenReturn(response);
+            when(diaryEntryFacade.updateEntry(eq(ENTRY_ID), any())).thenReturn(response);
 
             mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -234,14 +234,14 @@ class DiaryEntryControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(diaryEntryService, never()).update(any(), any());
+            verify(diaryEntryFacade, never()).updateEntry(any(), any());
         }
 
         @Test
         void shouldReturnNotFoundWhenEntryDoesNotExist() throws Exception {
             DiaryEntryDto request = createDiaryEntryRequest();
 
-            when(diaryEntryService.update(eq(ENTRY_ID), any()))
+            when(diaryEntryFacade.updateEntry(eq(ENTRY_ID), any()))
                     .thenThrow(new DiaryEntryNotFoundException("Diary entry not found: " + ENTRY_ID));
 
             mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
@@ -254,7 +254,7 @@ class DiaryEntryControllerTest {
         void shouldReturnBadRequestWhenProjectCompleted() throws Exception {
             DiaryEntryDto request = createDiaryEntryRequest();
 
-            when(diaryEntryService.update(eq(ENTRY_ID), any()))
+            when(diaryEntryFacade.updateEntry(eq(ENTRY_ID), any()))
                     .thenThrow(new ProjectStateException("Cannot add or modify diary entry in a completed project"));
 
             mockMvc.perform(put(BASE_URL + "/" + ENTRY_ID)
