@@ -7,7 +7,6 @@ import cz.mp.building_diary.exception.GlobalExceptionHandler;
 import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.building_diary.facade.AuthFacade;
-import cz.mp.building_diary.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,11 +21,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static cz.mp.building_diary.controller.AuthController.URL;
 import static cz.mp.building_diary.util.JsonTestUtil.toJson;
 import static cz.mp.building_diary.util.TestFixtures.EMAIL;
-import static cz.mp.building_diary.util.TestFixtures.KEYCLOAK_ID;
 import static cz.mp.building_diary.util.TestFixtures.loginRequest;
 import static cz.mp.building_diary.util.TestFixtures.loginResponse;
 import static cz.mp.building_diary.util.TestFixtures.registrationRequest;
-import static cz.mp.building_diary.util.TestFixtures.registrationResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,9 +39,6 @@ class AuthControllerTest {
     private static final String LOGIN_URL = URL + "/login";
 
     private MockMvc mockMvc;
-
-    @Mock
-    private UserService userService;
 
     @Mock
     private AuthFacade authFacade;
@@ -64,13 +58,13 @@ class AuthControllerTest {
 
         @Test
         void shouldRegisterUserSuccessfully() throws Exception {
-            when(userService.registerUser(any())).thenReturn(registrationResponse());
+            when(authFacade.register(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(toJson(registrationRequest())))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.accessToken").value(any()));
+                    .andExpect(jsonPath("$.accessToken").exists());
         }
 
         @Test
@@ -82,7 +76,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).registerUser(any());
+            verify(authFacade, never()).register(any());
         }
 
         @Test
@@ -94,7 +88,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).registerUser(any());
+            verify(authFacade, never()).register(any());
         }
 
         @Test
@@ -106,12 +100,12 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).registerUser(any());
+            verify(authFacade, never()).register(any());
         }
 
         @Test
         void shouldReturnConflictWhenEmailAlreadyExists() throws Exception {
-            when(userService.registerUser(any()))
+            when(authFacade.register(any()))
                     .thenThrow(new UserRegistrationException("Email already exists", ErrorCode.EMAIL_EXISTS));
 
             mockMvc.perform(post(REGISTER_URL)
@@ -123,7 +117,7 @@ class AuthControllerTest {
 
         @Test
         void shouldReturnServiceUnavailableWhenKeycloakFails() throws Exception {
-            when(userService.registerUser(any()))
+            when(authFacade.register(any()))
                     .thenThrow(new UserRegistrationException("Keycloak unavailable", ErrorCode.KEYCLOAK_ERROR));
 
             mockMvc.perform(post(REGISTER_URL)
@@ -141,7 +135,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).registerUser(any());
+            verify(authFacade, never()).register(any());
         }
 
         @Test
@@ -153,7 +147,7 @@ class AuthControllerTest {
                             .content(toJson(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).registerUser(any());
+            verify(authFacade, never()).register(any());
         }
     }
 

@@ -2,8 +2,7 @@ package cz.mp.building_diary.controller;
 
 import cz.mp.building_diary.config.SecurityConfig;
 import cz.mp.building_diary.config.TestSecurityConfig;
-import cz.mp.building_diary.service.AuthenticationService;
-import cz.mp.building_diary.service.UserService;
+import cz.mp.building_diary.facade.AuthFacade;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import static cz.mp.building_diary.util.JsonTestUtil.toJson;
 import static cz.mp.building_diary.util.TestFixtures.loginRequest;
 import static cz.mp.building_diary.util.TestFixtures.loginResponse;
 import static cz.mp.building_diary.util.TestFixtures.registrationRequest;
-import static cz.mp.building_diary.util.TestFixtures.registrationResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,10 +35,7 @@ class SecuredEndpointAccessTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private UserService userService;
-
-    @MockitoBean
-    private AuthenticationService authenticationService;
+    private AuthFacade authFacade;
 
     @Nested
     @DisplayName("Public Endpoints - No Authentication Required")
@@ -49,7 +44,7 @@ class SecuredEndpointAccessTest {
         @Test
         @DisplayName("should allow access to /auth/register without authentication")
         void shouldAllowAccessToRegisterWithoutAuthentication() throws Exception {
-            when(userService.registerUser(any())).thenReturn(registrationResponse());
+            when(authFacade.register(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -60,7 +55,7 @@ class SecuredEndpointAccessTest {
         @Test
         @DisplayName("should allow access to /auth/login without authentication")
         void shouldAllowAccessToLoginWithoutAuthentication() throws Exception {
-            when(authenticationService.login(any())).thenReturn(loginResponse());
+            when(authFacade.login(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -77,7 +72,7 @@ class SecuredEndpointAccessTest {
         @WithMockUser(roles = "USER")
         @DisplayName("should allow access to /auth/register even when authenticated")
         void shouldAllowAccessToRegisterWhenAuthenticated() throws Exception {
-            when(userService.registerUser(any())).thenReturn(registrationResponse());
+            when(authFacade.register(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(REGISTER_URL)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +84,7 @@ class SecuredEndpointAccessTest {
         @WithMockUser(roles = "USER")
         @DisplayName("should allow access to /auth/login even when authenticated")
         void shouldAllowAccessToLoginWhenAuthenticated() throws Exception {
-            when(authenticationService.login(any())).thenReturn(loginResponse());
+            when(authFacade.login(any())).thenReturn(loginResponse());
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
