@@ -5,7 +5,7 @@ import cz.mp.building_diary.entity.Project;
 
 import java.util.List;
 
-public interface DiaryExportStrategy {
+public interface FileExporter {
 
     byte[] export(Project project, List<DiaryEntry> entries);
 }
