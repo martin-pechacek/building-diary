@@ -3,10 +3,11 @@ package cz.mp.building_diary.service.impl;
 import cz.mp.building_diary.entity.DiaryEntry;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.exception.ProjectNotFoundException;
+import cz.mp.building_diary.factory.FileExporterFactory;
 import cz.mp.building_diary.repository.DiaryEntryRepository;
 import cz.mp.building_diary.repository.ProjectRepository;
 import cz.mp.building_diary.service.ProjectService;
-import cz.mp.building_diary.strategy.DiaryExportStrategy;
+import cz.mp.building_diary.strategy.FileExporter;
 import cz.mp.building_diary.enums.ExportFormat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -18,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,10 +43,13 @@ class DiaryExportServiceImplTest {
     private ProjectService projectService;
 
     @Mock
-    private DiaryExportStrategy csvExportStrategy;
+    private FileExporterFactory fileExporterFactory;
 
     @Mock
-    private DiaryExportStrategy pdfExportStrategy;
+    private FileExporter csvExportStrategy;
+
+    @Mock
+    private FileExporter pdfExportStrategy;
 
     private DiaryExportServiceImpl diaryExportService;
 
@@ -55,16 +58,11 @@ class DiaryExportServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        Map<ExportFormat, DiaryExportStrategy> exportStrategies = Map.of(
-                ExportFormat.CSV, csvExportStrategy,
-                ExportFormat.PDF, pdfExportStrategy
-        );
-
         diaryExportService = new DiaryExportServiceImpl(
                 diaryEntryRepository,
                 projectRepository,
                 projectService,
-                exportStrategies
+                fileExporterFactory
         );
 
         project = new Project();
@@ -86,6 +84,7 @@ class DiaryExportServiceImplTest {
         @Test
         void shouldExportDiaryEntriesToCsv() {
             byte[] expectedData = "csv content".getBytes();
+            when(fileExporterFactory.get(ExportFormat.CSV)).thenReturn(csvExportStrategy);
             when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
             when(diaryEntryRepository.findByProjectIdOrderByDateAsc(PROJECT_ID))
                     .thenReturn(List.of(diaryEntry));
@@ -116,6 +115,7 @@ class DiaryExportServiceImplTest {
         @Test
         void shouldExportDiaryEntriesToPdf() {
             byte[] expectedData = "%PDF content".getBytes();
+            when(fileExporterFactory.get(ExportFormat.PDF)).thenReturn(pdfExportStrategy);
             when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
             when(diaryEntryRepository.findByProjectIdOrderByDateAsc(PROJECT_ID))
                     .thenReturn(List.of(diaryEntry));
@@ -131,6 +131,7 @@ class DiaryExportServiceImplTest {
         @Test
         void shouldExportEmptyPdfWhenNoEntries() {
             byte[] expectedData = "%PDF empty".getBytes();
+            when(fileExporterFactory.get(ExportFormat.PDF)).thenReturn(pdfExportStrategy);
             when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
             when(diaryEntryRepository.findByProjectIdOrderByDateAsc(PROJECT_ID))
                     .thenReturn(Collections.emptyList());

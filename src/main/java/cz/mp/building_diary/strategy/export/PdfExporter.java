@@ -5,13 +5,14 @@ import cz.mp.building_diary.entity.MaterialUsage;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.WorkforceEntry;
 import cz.mp.building_diary.exception.ExportException;
-import cz.mp.building_diary.strategy.DiaryExportStrategy;
+import cz.mp.building_diary.strategy.FileExporter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import cz.mp.building_diary.enums.ExportFormat;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -20,8 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-@Component
-public class PdfExportStrategy implements DiaryExportStrategy {
+@Component(ExportFormat.Values.PDF)
+public class PdfExporter implements FileExporter {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final float MARGIN = 50;
