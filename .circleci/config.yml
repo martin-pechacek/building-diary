@@ -13,20 +13,21 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - gradle-deps-{{ checksum "build.gradle.kts" }}
+            - gradle-deps-{{ checksum "build.gradle.kts" }}-{{ checksum "building-diary-core/build.gradle.kts" }}-{{ checksum "photos-service/build.gradle.kts" }}
             - gradle-deps-
       - run:
           name: Build project
           command: ./gradlew build -x test
       - save_cache:
-          key: gradle-deps-{{ checksum "build.gradle.kts" }}
+          key: gradle-deps-{{ checksum "build.gradle.kts" }}-{{ checksum "building-diary-core/build.gradle.kts" }}-{{ checksum "photos-service/build.gradle.kts" }}
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
       - persist_to_workspace:
           root: .
           paths:
-            - build
+            - building-diary-core/build
+            - photos-service/build
 
   test:
     executor: java-executor
@@ -34,7 +35,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - gradle-deps-{{ checksum "build.gradle.kts" }}
+            - gradle-deps-{{ checksum "build.gradle.kts" }}-{{ checksum "building-diary-core/build.gradle.kts" }}-{{ checksum "photos-service/build.gradle.kts" }}
             - gradle-deps-
       - attach_workspace:
           at: .
@@ -42,10 +43,15 @@ jobs:
           name: Run tests
           command: ./gradlew test
       - store_test_results:
-          path: build/test-results/test
+          path: building-diary-core/build/test-results/test
+      - store_test_results:
+          path: photos-service/build/test-results/test
       - store_artifacts:
-          path: build/reports/tests/test
-          destination: test-reports
+          path: building-diary-core/build/reports/tests/test
+          destination: core-test-reports
+      - store_artifacts:
+          path: photos-service/build/reports/tests/test
+          destination: photos-test-reports
 
 workflows:
   build-and-test:
