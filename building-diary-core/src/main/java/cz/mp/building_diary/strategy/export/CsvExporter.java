@@ -4,8 +4,9 @@ import cz.mp.building_diary.entity.DiaryEntry;
 import cz.mp.building_diary.entity.MaterialUsage;
 import cz.mp.building_diary.entity.Project;
 import cz.mp.building_diary.entity.WorkforceEntry;
+import cz.mp.building_diary.enums.ExportFormat;
 import cz.mp.building_diary.exception.ExportException;
-import cz.mp.building_diary.strategy.DiaryExportStrategy;
+import cz.mp.building_diary.strategy.FileExporterStrategy;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Component;
@@ -18,8 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
-public class CsvExportStrategy implements DiaryExportStrategy {
+@Component(ExportFormat.Values.CSV)
+public class CsvExporter implements FileExporterStrategy {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -33,26 +34,30 @@ public class CsvExportStrategy implements DiaryExportStrategy {
                              "Materials Count", "Material Details")
                      .build())) {
 
-            for (DiaryEntry entry : entries) {
-                String workforceDetails = formatWorkforceDetails(entry.getWorkforceEntries());
-                String materialDetails = formatMaterialDetails(entry.getMaterialUsages());
-                double totalHours = entry.getWorkforceEntries().stream()
+            entries.forEach(e -> {
+                String workforceDetails = formatWorkforceDetails(e.getWorkforceEntries());
+                String materialDetails = formatMaterialDetails(e.getMaterialUsages());
+                double totalHours = e.getWorkforceEntries().stream()
                         .filter(w -> w.getWorkingHours() != null)
                         .mapToDouble(w -> w.getWorkingHours().doubleValue())
                         .sum();
 
-                csvPrinter.printRecord(
-                        entry.getDate().format(DATE_FORMATTER),
-                        entry.getWeatherCondition(),
-                        entry.getTemperature(),
-                        entry.getSummary() != null ? entry.getSummary() : "",
-                        entry.getWorkforceEntries().size(),
-                        totalHours,
-                        workforceDetails,
-                        entry.getMaterialUsages().size(),
-                        materialDetails
-                );
-            }
+                try {
+                    csvPrinter.printRecord(
+                            e.getDate().format(DATE_FORMATTER),
+                            e.getWeatherCondition(),
+                            e.getTemperature(),
+                            e.getSummary() != null ? e.getSummary() : "",
+                            e.getWorkforceEntries().size(),
+                            totalHours,
+                            workforceDetails,
+                            e.getMaterialUsages().size(),
+                            materialDetails
+                    );
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
 
             csvPrinter.flush();
             return outputStream.toByteArray();

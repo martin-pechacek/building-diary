@@ -58,7 +58,7 @@ class DiaryEntryMapperTest {
             entity.setDate(ENTRY_DATE);
             entity.setSummary("Daily summary");
             entity.setWeatherCondition("Sunny");
-            entity.setTemperature(22.5);
+            entity.setTemperature(22.5f);
 
             DiaryEntryDto dto = mapper.toDto(entity);
 
@@ -189,7 +189,7 @@ class DiaryEntryMapperTest {
             assertThat(entity.getDate()).isEqualTo(ENTRY_DATE);
             assertThat(entity.getSummary()).isEqualTo("Daily summary");
             assertThat(entity.getWeatherCondition()).isEqualTo("Sunny");
-            assertThat(entity.getTemperature()).isEqualTo(22.5);
+            assertThat(entity.getTemperature()).isEqualTo(22.5f);
         }
 
         @Test
