@@ -7,6 +7,8 @@ import cz.mp.building_diary.exception.UserRegistrationException;
 import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.building_diary.mapper.UserMapper;
 import cz.mp.building_diary.repository.UserRepository;
+import cz.mp.building_diary.dto.event.EmailVerificationEvent;
+import cz.mp.building_diary.service.EventPublisherService;
 import cz.mp.building_diary.service.KeycloakService;
 import cz.mp.building_diary.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final KeycloakService keycloakService;
     private final UserMapper userMapper;
+    private final EventPublisherService eventPublisherService;
 
     @Override
     @Transactional

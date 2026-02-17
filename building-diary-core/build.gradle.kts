@@ -17,6 +17,7 @@ dependencies {
     implementation("org.springframework.statemachine:spring-statemachine-core:4.0.0")
     implementation("org.apache.commons:commons-csv:1.12.0")
     implementation("org.apache.pdfbox:pdfbox:3.0.3")
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
