@@ -11,6 +11,7 @@ import cz.mp.building_diary.mapper.AddressMapper;
 import cz.mp.building_diary.mapper.ProjectMapper;
 import cz.mp.building_diary.repository.ProjectRepository;
 import cz.mp.building_diary.repository.UserRepository;
+import cz.mp.building_diary.dto.event.ProjectStatusChangedEvent;
 import cz.mp.building_diary.service.ProjectService;
 import cz.mp.building_diary.service.SecurityService;
 import cz.mp.building_diary.statemachine.ProjectStateMachineService;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final AddressMapper addressMapper;
     private final ProjectStateMachineService stateMachineService;
     private final SecurityService securityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -135,6 +138,16 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRepository.save(project);
+
+        eventPublisher.publishEvent(new ProjectStatusChangedEvent(
+                project.getId().toString(),
+                project.getName(),
+                project.getCreatedBy().getEmail(),
+                project.getConstructionManager() != null ? project.getConstructionManager().getEmail() : null,
+                project.getStatus().name(),
+                project.getStartDate()
+        ));
+
         return projectMapper.toDto(project);
     }
 
@@ -152,6 +165,16 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRepository.save(project);
+
+        eventPublisher.publishEvent(new ProjectStatusChangedEvent(
+                project.getId().toString(),
+                project.getName(),
+                project.getCreatedBy().getEmail(),
+                project.getConstructionManager() != null ? project.getConstructionManager().getEmail() : null,
+                project.getStatus().name(),
+                project.getEndDate()
+        ));
+
         return projectMapper.toDto(project);
     }
 

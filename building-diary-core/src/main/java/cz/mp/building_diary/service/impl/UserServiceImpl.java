@@ -8,12 +8,12 @@ import cz.mp.building_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.building_diary.mapper.UserMapper;
 import cz.mp.building_diary.repository.UserRepository;
 import cz.mp.building_diary.dto.event.EmailVerificationEvent;
-import cz.mp.building_diary.service.EventPublisherService;
 import cz.mp.building_diary.service.KeycloakService;
 import cz.mp.building_diary.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final KeycloakService keycloakService;
     private final UserMapper userMapper;
-    private final EventPublisherService eventPublisherService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -44,6 +44,12 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         LOG.info("User registered successfully: {}", dto.email());
+
+        eventPublisher.publishEvent(new EmailVerificationEvent(
+                user.getId().toString(),
+                user.getEmail(),
+                UUID.randomUUID().toString()
+        ));
 
         return userMapper.toDto(user);
     }
