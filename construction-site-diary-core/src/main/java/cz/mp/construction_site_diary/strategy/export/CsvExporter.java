@@ -4,7 +4,6 @@ import cz.mp.construction_site_diary.entity.DiaryEntry;
 import cz.mp.construction_site_diary.entity.MaterialUsage;
 import cz.mp.construction_site_diary.entity.Project;
 import cz.mp.construction_site_diary.entity.WorkforceEntry;
-import cz.mp.construction_site_diary.enums.ExportFormat;
 import cz.mp.construction_site_diary.exception.ExportException;
 import cz.mp.construction_site_diary.strategy.FileExporterStrategy;
 import org.apache.commons.csv.CSVFormat;
@@ -19,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component(ExportFormat.Values.CSV)
+@Component("CSV")
 public class CsvExporter implements FileExporterStrategy {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");

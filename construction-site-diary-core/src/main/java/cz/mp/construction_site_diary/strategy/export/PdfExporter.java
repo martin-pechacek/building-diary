@@ -12,7 +12,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import cz.mp.construction_site_diary.enums.ExportFormat;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -21,7 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-@Component(ExportFormat.Values.PDF)
+@Component("PDF")
 public class PdfExporter implements FileExporterStrategy {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
