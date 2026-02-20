@@ -1,11 +1,11 @@
 services:
   postgres:
     image: postgres:18
-    container_name: building-diary-postgres
+    container_name: construction-site-diary-postgres
     environment:
-      POSTGRES_DB: building_diary
-      POSTGRES_USER: building_diary
-      POSTGRES_PASSWORD: building_diary
+      POSTGRES_DB: construction_site_diary
+      POSTGRES_USER: construction_site_diary
+      POSTGRES_PASSWORD: construction_site_diary
     ports:
       - "5432:5432"
     volumes:
@@ -14,7 +14,7 @@ services:
 
   redis:
     image: redis:8-alpine
-    container_name: building-diary-redis
+    container_name: construction-site-diary-redis
     ports:
       - "6379:6379"
     volumes:
@@ -23,12 +23,12 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.4
-    container_name: building-diary-keycloak
+    container_name: construction-site-diary-keycloak
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/building_diary
-      KC_DB_USERNAME: building_diary
-      KC_DB_PASSWORD: building_diary
+      KC_DB_URL: jdbc:postgresql://postgres:5432/construction_site_diary
+      KC_DB_USERNAME: construction_site_diary
+      KC_DB_PASSWORD: construction_site_diary
       KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8180
       KC_HTTP_ENABLED: true

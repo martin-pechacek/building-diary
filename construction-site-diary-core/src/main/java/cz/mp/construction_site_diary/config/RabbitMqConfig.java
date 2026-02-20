@@ -1,0 +1,35 @@
+package cz.mp.construction_site_diary.config;
+
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class RabbitMqConfig {
+
+    public static final String EXCHANGE = "building-diary.events";
+
+    public static final String ROUTING_KEY_EMAIL_VERIFICATION = "notification.user.email-verification";
+    public static final String ROUTING_KEY_PROJECT_STATUS_CHANGED = "notification.project.status-changed";
+
+    @Bean
+    public TopicExchange buildingDiaryExchange() {
+        return new TopicExchange(EXCHANGE, true, false);
+    }
+
+    @Bean
+    public JacksonJsonMessageConverter jackson2JsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+                                         JacksonJsonMessageConverter converter) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(converter);
+        return template;
+    }
+}
