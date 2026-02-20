@@ -15,7 +15,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Photos Service API")
-                        .description("API for managing photos attached to building diary entries.")
+                        .description("API for managing photos attached to construction site diary entries.")
                         .version("0.0.1-SNAPSHOT"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new io.swagger.v3.oas.models.Components()

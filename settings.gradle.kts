@@ -1,4 +1,4 @@
-rootProject.name = "building-diary"
+rootProject.name = "construction-site-diary"
 
-include("building-diary-core")
+include("construction-site-diary-core")
 include("photos-service")
