@@ -1,10 +1,29 @@
-# Building Diary
+# Construction Site Diary
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/martin-pechacek/building-diary/tree/main.svg?style=svg&circle-token=CCIPRJ_25iU6VBaMn7XQu7UXcFz43_9e21b05418cdd4a87f03081206b34464189bd18f)](https://dl.circleci.com/status-badge/redirect/gh/martin-pechacek/building-diary/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/martin-pechacek/construction-site-diary/tree/main.svg?style=svg&circle-token=CCIPRJ_25iU6VBaMn7XQu7UXcFz43_9e21b05418cdd4a87f03081206b34464189bd18f)](https://dl.circleci.com/status-badge/redirect/gh/martin-pechacek/construction-site-diary/tree/main)
 
-A web application for tracking construction and building project progress.
+A microservice-based web application for tracking construction and building project progress.
 
 **DISCLAIMER**: Documentation and tests were generated with the help of AI.
+
+## Architecture
+
+The application follows a microservice architecture, organized as a multi-module Gradle monorepo. Each service has its own database, runs independently, and communicates via REST. Authentication is shared through a common Keycloak realm and JWT tokens.
+
+### Service Overview
+
+| Service | Module | Port | Database | Description |
+|---------|--------|------|----------|-------------|
+| Core Service | `construction-site-diary-core` | 8080 | `construction_site_diary` | Projects, diary entries, authentication, export |
+| Photos Service | `photos-service` | 8081 | `photos` | Photo upload, download, management |
+
+### Infrastructure
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| PostgreSQL | 5432 | Databases for core and photos services |
+| Redis | 6379 | Caching |
+| Keycloak | 8180 | Authentication and authorization |
 
 ## Table of Contents
 
@@ -52,8 +71,8 @@ A web application for tracking construction and building project progress.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/martin-pechacek/building-diary
-   cd building-diary
+   git clone https://github.com/martin-pechacek/construction-site-diary
+   cd construction-site-diary
    ```
 
 2. Start the infrastructure services:
@@ -61,20 +80,26 @@ A web application for tracking construction and building project progress.
    docker compose -f docker/docker-compose.yml up -d
    ```
 
-3. Run the application:
+3. Run the core application:
    ```bash
-   ./gradlew bootRun
+   ./gradlew :construction-site-diary-core:bootRun
+   ```
+
+4. Run the photos service:
+   ```bash
+   ./gradlew :photos-service:bootRun
    ```
 
 ## Docker Setup
 
 The project includes a Docker Compose configuration in the `docker/` folder for local development with the following services:
 
-| Service    | Port | Credentials                    | Purpose              |
-|------------|------|--------------------------------|----------------------|
-| PostgreSQL | 5432 | `building_diary:building_diary`| Primary database     |
-| Redis      | 6379 | -                              | Caching              |
-| Keycloak   | 8180 | `admin:admin`                  | Authentication server|
+| Service    | Port | Credentials                    | Purpose                       |
+|------------|------|--------------------------------|-------------------------------|
+| PostgreSQL | 5432 | `construction_site_diary:construction_site_diary`| Core database                 |
+| PostgreSQL | 5432 | `photos_user:photos_user`      | Photos database               |
+| Redis      | 6379 | -                              | Caching                       |
+| Keycloak   | 8180 | `admin:admin`                  | Authentication server         |
 
 ### Commands
 
@@ -108,12 +133,12 @@ After starting Keycloak for the first time, you need to configure the realm, rol
 1. Login to Keycloak Admin Console at http://localhost:8180
 2. Click the dropdown in the top-left (shows "master")
 3. Click **Create realm**
-4. Set **Realm name** to `building-diary`
+4. Set **Realm name** to `construction-site-diary`
 5. Click **Create**
 
 #### 2. Create Roles
 
-1. In the `building-diary` realm, go to **Realm roles** in the left menu
+1. In the `construction-site-diary` realm, go to **Realm roles** in the left menu
 2. Click **Create role**
 3. Create role `USER`:
    - **Role name:** `USER`
@@ -129,7 +154,7 @@ After starting Keycloak for the first time, you need to configure the realm, rol
 2. Click **Create client**
 3. **General Settings:**
    - **Client type:** OpenID Connect
-   - **Client ID:** `building-diary-client`
+   - **Client ID:** `construction-site-diary-client`
    - Click **Next**
 4. **Capability config:**
    - **Client authentication:** ON (confidential client)
@@ -158,7 +183,7 @@ This client is used by the Spring Boot backend to create users in Keycloak.
 2. Click **Create client**
 3. **General Settings:**
    - **Client type:** OpenID Connect
-   - **Client ID:** `building-diary-admin`
+   - **Client ID:** `construction-site-diary-admin`
    - Click **Next**
 4. **Capability config:**
    - **Client authentication:** ON
@@ -169,11 +194,12 @@ This client is used by the Spring Boot backend to create users in Keycloak.
    - Leave all fields empty
    - Click **Save**
 6. Go to **Service account roles** tab
-7. Click **Assign role** -> *Client roles*
+7. Click **Assign role** -> change filter to **"Filter by clients"**
 8. Search for `realm-management` and assign these roles:
    - `manage-users`
    - `view-users`
    - `query-users`
+   - `view-realm`
 9. Go to the **Credentials** tab
 10. Copy the **Client secret** and set it as environment variable or in application.yaml:
     ```yaml
@@ -182,7 +208,15 @@ This client is used by the Spring Boot backend to create users in Keycloak.
         client-secret: <your-admin-client-secret>
     ```
 
-#### 6. Create Test Users
+#### 6. Disable Required Actions
+
+Keycloak 26+ enables "Verify Email" and "Verify Profile" by default, which prevents API-created users from logging in via password grant.
+
+1. Go to **Authentication** -> **Required actions**
+2. Disable **Verify Email** (toggle off "Set as default action")
+3. Disable **Verify Profile** (toggle off "Set as default action")
+
+#### 7. Create Test Users
 
 1. Go to **Users** in the left menu
 2. Click **Create new user**
@@ -206,9 +240,9 @@ You can test JWT token retrieval using curl:
 
 ```bash
 # Get token using Resource Owner Password Credentials (for testing only)
-curl -X POST "http://localhost:8180/realms/building-diary/protocol/openid-connect/token" \
+curl -X POST "http://localhost:8180/realms/construction-site-diary/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=building-diary-client" \
+  -d "client_id=construction-site-diary-client" \
   -d "client_secret=<your-client-secret>" \
   -d "username=<test-user>" \
   -d "password=<test-password>" \
@@ -219,8 +253,8 @@ To decode the JWT token, use https://jwt.io or:
 
 ```bash
 # Extract and decode the access_token (requires jq)
-TOKEN=$(curl -s -X POST "http://localhost:8180/realms/building-diary/protocol/openid-connect/token" \
-  -d "client_id=building-diary-client" \
+TOKEN=$(curl -s -X POST "http://localhost:8180/realms/construction-site-diary/protocol/openid-connect/token" \
+  -d "client_id=construction-site-diary-client" \
   -d "client_secret=<your-client-secret>" \
   -d "username=<test-user>" \
   -d "password=<test-password>" \
@@ -232,9 +266,15 @@ echo $TOKEN | cut -d'.' -f2 | base64 -d 2>/dev/null | jq
 
 ## Development
 
-Build the project:
+Build all modules:
 ```bash
 ./gradlew build
+```
+
+Build a specific module:
+```bash
+./gradlew :construction-site-diary-core:build
+./gradlew :photos-service:build
 ```
 
 Run tests:
@@ -246,19 +286,21 @@ Run tests:
 
 The application expects the following services:
 
-| Service    | Default Port | Purpose          |
-|------------|--------------|------------------|
-| PostgreSQL | 5432         | Primary database |
-| Redis      | 6379         | Caching          |
+| Service    | Default Port | Purpose                    |
+|------------|--------------|----------------------------|
+| PostgreSQL | 5432         | Core database (`construction_site_diary`) |
+| PostgreSQL | 5432         | Photos database (`photos`)       |
+| Redis      | 6379         | Caching                    |
+| Keycloak   | 8180         | Authentication server      |
 
 Configure connection details in `application.yaml` or via environment variables.
 
 ## API Documentation
 
-| Endpoint | Description |
-|----------|-------------|
-| `/swagger-ui.html` | Interactive API documentation |
-| `/api-docs` | OpenAPI JSON specification |
+| Service | Swagger UI | OpenAPI JSON |
+|---------|------------|--------------|
+| Core (port 8080) | `/swagger-ui.html` | `/api-docs` |
+| Photos (port 8081) | `/swagger-ui.html` | `/api-docs` |
 
 ## Authentication
 
@@ -319,17 +361,17 @@ The application uses two separate Keycloak clients with different purposes:
 
 | Client | Purpose | Grant Type | Used For |
 |--------|---------|------------|----------|
-| `building-diary-admin` | User management | Client Credentials | Creating/deleting users during registration |
-| `building-diary-client` | User authentication | Password Grant | Login and token refresh |
+| `construction-site-diary-admin` | User management | Client Credentials | Creating/deleting users during registration |
+| `construction-site-diary-client` | User authentication | Password Grant | Login and token refresh |
 
-#### building-diary-admin
+#### construction-site-diary-admin
 
 Service account client for backend-to-Keycloak communication:
 - **Authentication flow:** Service accounts only
 - **Permissions:** `manage-users`, `view-users`, `query-users`
 - **Usage:** Called by `KeycloakService.createUser()` and `deleteUser()`
 
-#### building-diary-client
+#### construction-site-diary-client
 
 Public-facing client for user authentication:
 - **Authentication flow:** Direct access grants (password grant)
@@ -357,7 +399,7 @@ Projects follow a state machine with three states:
 Requirements:
 - Construction manager assigned
 - Construction site address set
-- Building permit number filled
+- Permit number filled
 
 #### Complete (IN_PROGRESS → COMPLETED)
 
@@ -387,17 +429,31 @@ Both formats include:
 
 ## Photo Upload
 
-Attach photos to diary entries. Photos are stored on the filesystem with metadata in the database.
+Photos are managed by a separate **photos-service** (port 8081). Photos are linked to diary entries via `diaryEntryId` (soft reference — no foreign key across databases).
 
 **Allowed file types:** JPEG and PNG only (validated by file signature)
 
+### Photo Endpoints (port 8081)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/photos/projects/{projectId}/diary-entries/{diaryEntryId}` | Upload a photo |
+| `GET` | `/api/v1/photos/{id}` | Download a photo |
+| `DELETE` | `/api/v1/photos/{id}` | Delete a photo |
+| `GET` | `/api/v1/photos/diary-entries/{diaryEntryId}` | List photos for a diary entry |
+| `DELETE` | `/api/v1/photos/diary-entries/{diaryEntryId}` | Delete all photos for a diary entry |
+
+### Access Control
+
+Each photo stores `projectId` and `ownerUserId`. Users can only access their own photos. Admins (`ROLE_ADMIN`) can access all photos. Authorization is self-contained — no inter-service calls.
+
 ### Configuration
 
-Configure photo storage location in `application.yaml`:
+Configure photo storage location in `photos-service/src/main/resources/application.yaml`:
 
 ```yaml
 storage:
-  location: ./uploads
+  location: ./uploads-photos
 ```
 
 ## Weather Integration

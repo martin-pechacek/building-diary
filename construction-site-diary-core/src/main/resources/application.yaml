@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: construction-site-diary
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: construction-site-diary-client
+            client-secret: IGm1CRdduJgUTmfqAeE6JjbiU2gBUN5r
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/construction-site-diary
+            user-name-attribute: preferred_username
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/construction_site_diary
+    username: construction_site_diary
+    password: construction_site_diary
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+keycloak:
+  admin:
+    server-url: http://localhost:8180
+    realm: construction-site-diary
+    client-id: construction-site-diary-admin
+    client-secret: mxY6MLh4VAxyncxgquemTKwhyr9mhEBn
+    target-realm: construction-site-diary
+    default-role: USER
+  client:
+    server-url: http://localhost:8180
+    realm: construction-site-diary
+    client-id: construction-site-diary-client
+    client-secret: h0F49dDVkxTimMEEWtktVHUfYuYejUzX
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

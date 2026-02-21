@@ -1,0 +1,28 @@
+package cz.mp.photos_service.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI photosServiceOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Photos Service API")
+                        .description("API for managing photos attached to construction site diary entries.")
+                        .version("0.0.1-SNAPSHOT"))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes("bearerAuth", new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                                .description("JWT access token obtained from the auth service")));
+    }
+}

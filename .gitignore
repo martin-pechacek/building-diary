@@ -16,6 +16,9 @@ build/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+CLAUDE.md
+session_summary.md
+uploads-photos
 
 ### IntelliJ IDEA ###
 .idea
