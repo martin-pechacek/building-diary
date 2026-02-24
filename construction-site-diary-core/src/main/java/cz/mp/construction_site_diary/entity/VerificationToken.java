@@ -1,7 +1,10 @@
 package cz.mp.construction_site_diary.entity;
 
+import cz.mp.construction_site_diary.enums.TokenType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -33,8 +36,9 @@ public class VerificationToken {
     @Column(nullable = false, unique = true)
     private String token;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "token_type", nullable = false)
-    private String tokenType;
+    private TokenType tokenType;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
@@ -45,7 +49,7 @@ public class VerificationToken {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public VerificationToken(User user, String token, String tokenType, Instant expiresAt) {
+    public VerificationToken(User user, String token, TokenType tokenType, Instant expiresAt) {
         this.user = user;
         this.token = token;
         this.tokenType = tokenType;

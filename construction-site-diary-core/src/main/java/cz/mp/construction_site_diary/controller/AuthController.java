@@ -13,10 +13,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -117,5 +119,21 @@ public class AuthController extends BaseController {
     })
     public LoginDto refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
         return authFacade.refresh(refreshToken);
+    }
+
+    @GetMapping("/verify-email")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Verify email address",
+            description = "Verifies the user's email address using the token sent via email"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Email verified successfully"),
+            @ApiResponse(responseCode = "400",
+                    description = "Invalid, expired or already used token",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class)))
+    })
+    public void verifyEmail(@RequestParam String token) {
+        authFacade.verifyEmail(token);
     }
 }

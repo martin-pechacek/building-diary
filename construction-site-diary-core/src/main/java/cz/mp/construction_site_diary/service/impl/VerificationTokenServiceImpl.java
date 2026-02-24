@@ -2,39 +2,37 @@ package cz.mp.construction_site_diary.service.impl;
 
 import cz.mp.construction_site_diary.entity.User;
 import cz.mp.construction_site_diary.entity.VerificationToken;
+import cz.mp.construction_site_diary.enums.TokenType;
 import cz.mp.construction_site_diary.exception.VerificationTokenException;
 import cz.mp.construction_site_diary.repository.VerificationTokenRepository;
 import cz.mp.construction_site_diary.service.VerificationTokenService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
-@Service
 @RequiredArgsConstructor
-public class VerificationTokenServiceImpl implements VerificationTokenService {
+public abstract class VerificationTokenServiceImpl implements VerificationTokenService {
 
     private static final Logger LOG = LoggerFactory.getLogger(VerificationTokenServiceImpl.class);
     private static final long TOKEN_EXPIRY_HOURS = 24;
 
-    private final VerificationTokenRepository verificationTokenRepository;
+    protected final VerificationTokenRepository verificationTokenRepository;
 
     @Override
     @Transactional
-    public String createToken(User user, String tokenType) {
+    public String createToken(User user, TokenType tokenType) {
         String token = UUID.randomUUID().toString();
-        VerificationToken verificationToken = new VerificationToken(
+        verificationTokenRepository.save(new VerificationToken(
                 user,
                 token,
                 tokenType,
                 Instant.now().plus(TOKEN_EXPIRY_HOURS, ChronoUnit.HOURS)
-        );
-        verificationTokenRepository.save(verificationToken);
+        ));
         LOG.info("Created {} token for user: {}", tokenType, user.getEmail());
         return token;
     }

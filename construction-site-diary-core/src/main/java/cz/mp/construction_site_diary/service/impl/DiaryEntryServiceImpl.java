@@ -71,10 +71,10 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
                     });
         }
 
-        diaryEntryRepository.save(entry);
+        DiaryEntry savedEntry = diaryEntryRepository.save(entry);
         LOG.info("Diary entry created for project {} on date {}", projectId, dto.date());
 
-        return diaryEntryMapper.toDto(entry);
+        return diaryEntryMapper.toDto(savedEntry);
     }
 
     @Override

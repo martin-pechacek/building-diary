@@ -6,6 +6,7 @@ import cz.mp.construction_site_diary.entity.Address;
 import cz.mp.construction_site_diary.enums.Country;
 import cz.mp.construction_site_diary.entity.Project;
 import cz.mp.construction_site_diary.entity.User;
+import cz.mp.construction_site_diary.event.ProjectStatusChangedEvent;
 import cz.mp.construction_site_diary.exception.ProjectNotFoundException;
 import cz.mp.construction_site_diary.exception.ProjectStateException;
 import cz.mp.construction_site_diary.exception.UserNotFoundException;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,6 +61,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private SecurityService securityService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ProjectServiceImpl projectService;
@@ -238,6 +243,7 @@ class ProjectServiceImplTest {
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(projectRepository.save(project)).thenReturn(project);
 
             projectService.archive(PROJECT_ID);
 
@@ -272,6 +278,7 @@ class ProjectServiceImplTest {
             assertThat(result).isEqualTo(projectDto);
             verify(stateMachineService).sendEvent(project, ProjectEvent.START_WORK);
             verify(projectRepository).save(project);
+            verify(eventPublisher).publishEvent(any(ProjectStatusChangedEvent.class));
         }
 
         @Test
@@ -304,6 +311,7 @@ class ProjectServiceImplTest {
             assertThat(result).isEqualTo(projectDto);
             verify(stateMachineService).sendEvent(project, ProjectEvent.COMPLETE);
             verify(projectRepository).save(project);
+            verify(eventPublisher).publishEvent(any(ProjectStatusChangedEvent.class));
         }
 
         @Test

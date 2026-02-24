@@ -37,7 +37,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/api/*/auth/register",
                                 "/api/*/auth/login",
-                                "/api/*/auth/refresh"
+                                "/api/*/auth/refresh",
+                                "/api/*/auth/verify-email"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")

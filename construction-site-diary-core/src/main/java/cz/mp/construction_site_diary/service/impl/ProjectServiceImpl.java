@@ -54,10 +54,10 @@ public class ProjectServiceImpl implements ProjectService {
         project.setCreatedBy(currentUser);
         project.setStatus(ProjectStatus.PLANNING);
 
-        projectRepository.save(project);
-        LOG.info("Project created: {} by user: {}", project.getId(), currentUser.getEmail());
+        Project savedProject = projectRepository.save(project);
+        LOG.info("Project created: {} by user: {}", savedProject.getId(), currentUser.getEmail());
 
-        return projectMapper.toDto(project);
+        return projectMapper.toDto(savedProject);
     }
 
     @Override
@@ -105,10 +105,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(this::findUserById)
                 .ifPresent(project::setConstructionManager);
 
-        projectRepository.save(project);
-        LOG.info("Project updated: {}", project.getId());
+        Project savedProject = projectRepository.save(project);
+        LOG.info("Project updated: {}", savedProject.getId());
 
-        return projectMapper.toDto(project);
+        return projectMapper.toDto(savedProject);
     }
 
     @Override
@@ -120,8 +120,8 @@ public class ProjectServiceImpl implements ProjectService {
     public void archive(UUID id) {
         Project project = findProjectById(id);
         project.setArchived(true);
-        projectRepository.save(project);
-        LOG.info("Project archived: {}", id);
+        Project savedProject = projectRepository.save(project);
+        LOG.info("Project archived: {}", savedProject.getId());
     }
 
     @Override
@@ -137,18 +137,18 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ProjectStateException("Cannot start project. Ensure construction manager, address, and permit are set.");
         }
 
-        projectRepository.save(project);
+        Project savedProject = projectRepository.save(project);
 
         eventPublisher.publishEvent(new ProjectStatusChangedEvent(
-                project.getId().toString(),
-                project.getName(),
-                project.getCreatedBy().getEmail(),
-                project.getConstructionManager() != null ? project.getConstructionManager().getEmail() : null,
-                project.getStatus().name(),
-                project.getStartDate()
+                savedProject.getId().toString(),
+                savedProject.getName(),
+                savedProject.getCreatedBy().getEmail(),
+                savedProject.getConstructionManager() != null ? savedProject.getConstructionManager().getEmail() : null,
+                savedProject.getStatus().name(),
+                savedProject.getStartDate()
         ));
 
-        return projectMapper.toDto(project);
+        return projectMapper.toDto(savedProject);
     }
 
     @Override
@@ -164,18 +164,18 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ProjectStateException("Cannot complete project. Ensure all diary entries are filled.");
         }
 
-        projectRepository.save(project);
+        Project savedProject = projectRepository.save(project);
 
         eventPublisher.publishEvent(new ProjectStatusChangedEvent(
-                project.getId().toString(),
-                project.getName(),
-                project.getCreatedBy().getEmail(),
-                project.getConstructionManager() != null ? project.getConstructionManager().getEmail() : null,
-                project.getStatus().name(),
-                project.getEndDate()
+                savedProject.getId().toString(),
+                savedProject.getName(),
+                savedProject.getCreatedBy().getEmail(),
+                savedProject.getConstructionManager() != null ? savedProject.getConstructionManager().getEmail() : null,
+                savedProject.getStatus().name(),
+                savedProject.getEndDate()
         ));
 
-        return projectMapper.toDto(project);
+        return projectMapper.toDto(savedProject);
     }
 
     private Project findProjectById(UUID id) {

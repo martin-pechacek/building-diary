@@ -4,6 +4,7 @@ import cz.mp.construction_site_diary.dto.LoginDto;
 import cz.mp.construction_site_diary.dto.UserRegistrationDto;
 import cz.mp.construction_site_diary.facade.AuthFacade;
 import cz.mp.construction_site_diary.service.AuthenticationService;
+import cz.mp.construction_site_diary.service.EmailVerificationService;
 import cz.mp.construction_site_diary.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ public class AuthFacadeImpl implements AuthFacade {
 
     private final UserService userService;
     private final AuthenticationService authenticationService;
+    private final EmailVerificationService emailVerificationService;
 
     @Override
     public LoginDto register(UserRegistrationDto dto) {
@@ -29,5 +31,10 @@ public class AuthFacadeImpl implements AuthFacade {
     @Override
     public LoginDto refresh(String refreshToken) {
         return authenticationService.refresh(refreshToken);
+    }
+
+    @Override
+    public void verifyEmail(String token) {
+        emailVerificationService.verifyEmail(token);
     }
 }

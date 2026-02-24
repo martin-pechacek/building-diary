@@ -1,6 +1,7 @@
 package cz.mp.construction_site_diary.exception;
 
 import cz.mp.construction_site_diary.dto.ErrorDto;
+import cz.mp.construction_site_diary.exception.VerificationTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -94,6 +95,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDto> handleCoordinatesNotFoundException(CoordinatesNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
+    @ExceptionHandler(VerificationTokenException.class)
+    public ResponseEntity<ErrorDto> handleVerificationTokenException(VerificationTokenException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
     @ExceptionHandler(Exception.class)

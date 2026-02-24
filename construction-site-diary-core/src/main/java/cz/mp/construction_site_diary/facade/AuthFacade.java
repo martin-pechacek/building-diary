@@ -10,4 +10,6 @@ public interface AuthFacade {
     LoginDto login(LoginDto dto);
 
     LoginDto refresh(String refreshToken);
+
+    void verifyEmail(String token);
 }

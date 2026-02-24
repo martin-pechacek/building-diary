@@ -8,7 +8,7 @@ A microservice-based web application for tracking construction and building proj
 
 ## Architecture
 
-The application follows a microservice architecture, organized as a multi-module Gradle monorepo. Each service has its own database, runs independently, and communicates via REST. Authentication is shared through a common Keycloak realm and JWT tokens.
+The application follows a microservice architecture, organized as a multi-module Gradle monorepo. Each service has its own database, runs independently, and communicates via REST or message queue. Authentication is shared through a common Keycloak realm and JWT tokens.
 
 ### Service Overview
 
@@ -16,14 +16,17 @@ The application follows a microservice architecture, organized as a multi-module
 |---------|--------|------|----------|-------------|
 | Core Service | `construction-site-diary-core` | 8080 | `construction_site_diary` | Projects, diary entries, authentication, export |
 | Photos Service | `photos-service` | 8081 | `photos` | Photo upload, download, management |
+| Notification Service | `notification-service` | 8082 | `notifications` | Async email notifications |
 
 ### Infrastructure
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| PostgreSQL | 5432 | Databases for core and photos services |
+| PostgreSQL | 5432 | Databases for core, photos, and notification services |
 | Redis | 6379 | Caching |
 | Keycloak | 8180 | Authentication and authorization |
+| RabbitMQ | 5672 / 15672 | Message queue / Management UI |
+| Mailpit | 1025 / 8025 | SMTP (dev) / Email inbox UI |
 
 ## Table of Contents
 
@@ -50,6 +53,7 @@ The application follows a microservice architecture, organized as a multi-module
 - [Diary Export](#diary-export)
 - [Photo Upload](#photo-upload)
 - [Weather Integration](#weather-integration)
+- [Notification Service](#notification-service)
 
 ## Tech Stack
 
@@ -90,16 +94,24 @@ The application follows a microservice architecture, organized as a multi-module
    ./gradlew :photos-service:bootRun
    ```
 
+5. Run the notification service:
+   ```bash
+   ./gradlew :notification-service:bootRun
+   ```
+
 ## Docker Setup
 
 The project includes a Docker Compose configuration in the `docker/` folder for local development with the following services:
 
 | Service    | Port | Credentials                    | Purpose                       |
 |------------|------|--------------------------------|-------------------------------|
-| PostgreSQL | 5432 | `construction_site_diary:construction_site_diary`| Core database                 |
+| PostgreSQL | 5432 | `construction_site_diary:construction_site_diary` | Core database        |
 | PostgreSQL | 5432 | `photos_user:photos_user`      | Photos database               |
+| PostgreSQL | 5432 | `notifications_user:notifications_pass` | Notifications database |
 | Redis      | 6379 | -                              | Caching                       |
 | Keycloak   | 8180 | `admin:admin`                  | Authentication server         |
+| RabbitMQ   | 5672 / 15672 | `construction_site_diary:diary` | Message queue / Management UI |
+| Mailpit    | 1025 / 8025 | -                             | SMTP (dev) / Email inbox UI   |
 
 ### Commands
 
@@ -119,6 +131,7 @@ All service data is persisted in Docker volumes:
 - `postgres_data` - PostgreSQL database files
 - `redis_data` - Redis append-only file
 - `keycloak_data` - Keycloak data
+- `rabbitmq_data` - RabbitMQ queue data
 
 ### Keycloak Admin Console
 
@@ -275,6 +288,7 @@ Build a specific module:
 ```bash
 ./gradlew :construction-site-diary-core:build
 ./gradlew :photos-service:build
+./gradlew :notification-service:build
 ```
 
 Run tests:
@@ -289,9 +303,13 @@ The application expects the following services:
 | Service    | Default Port | Purpose                    |
 |------------|--------------|----------------------------|
 | PostgreSQL | 5432         | Core database (`construction_site_diary`) |
-| PostgreSQL | 5432         | Photos database (`photos`)       |
+| PostgreSQL | 5432         | Photos database (`photos`) |
+| PostgreSQL | 5432         | Notifications database (`notifications`) |
 | Redis      | 6379         | Caching                    |
 | Keycloak   | 8180         | Authentication server      |
+| RabbitMQ   | 5672 / 15672 | Message queue / Management UI |
+| Mailpit    | 1025 / 8025  | Email delivery / inbox (dev) |
+| Notification Service | 8082 | Notification service     |
 
 Configure connection details in `application.yaml` or via environment variables.
 
@@ -509,3 +527,23 @@ Diary entries can automatically fetch weather data for the construction site loc
 ### Supported Countries
 
 Weather lookup works for cities in Czech Republic (CZ) and Slovakia (SK).
+
+## Notification Service
+
+The notification service delivers transactional emails for key application events. It runs as an independent service on port 8082.
+
+### Emails Sent
+
+| Trigger | Recipients |
+|---------|------------|
+| User registration | Registering user — email verification link |
+| Project started | Project owner + construction manager (if assigned and different) |
+| Project completed | Project owner + construction manager (if assigned and different) |
+
+### Local Development — Viewing Emails
+
+In development, all outgoing emails are captured by **Mailpit** instead of being delivered. Access the email inbox at **http://localhost:8025** after starting the Docker services.
+
+### RabbitMQ Management UI
+
+Queue status and message flow can be monitored at **http://localhost:15672** (credentials: `construction_site_diary` / `diary`).

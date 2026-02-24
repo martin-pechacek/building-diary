@@ -1,6 +1,6 @@
 package cz.mp.construction_site_diary.config;
 
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
@@ -16,8 +16,8 @@ public class RabbitMqConfig {
     public static final String ROUTING_KEY_PROJECT_STATUS_CHANGED = "notification.project.status-changed";
 
     @Bean
-    public TopicExchange buildingDiaryExchange() {
-        return new TopicExchange(EXCHANGE, true, false);
+    public DirectExchange buildingDiaryExchange() {
+        return new DirectExchange(EXCHANGE, true, false);
     }
 
     @Bean
