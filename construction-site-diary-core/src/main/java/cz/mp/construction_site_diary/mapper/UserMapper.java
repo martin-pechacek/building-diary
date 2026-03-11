@@ -20,6 +20,6 @@ public interface UserMapper {
     UserRegistrationDto toDto(User user);
 
     @Mapping(target = "enabled", constant = "true")
-    @Mapping(target = "emailVerified", constant = "false")
+    @Mapping(target = "emailVerified", constant = "true")
     UserRepresentation toKeycloakUser(UserRegistrationDto dto);
 }

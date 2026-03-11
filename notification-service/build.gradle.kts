@@ -1,4 +1,4 @@
-description = "Building Diary - Notification Service"
+description = "Construction Site Diary - Notification Service"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-amqp")

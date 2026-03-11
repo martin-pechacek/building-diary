@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-    static final String EXCHANGE = "building-diary.events";
-    static final String DLQ = "building-diary.dlq";
+    static final String EXCHANGE = "construction-site-diary.events";
+    static final String DLQ = "construction-site-diary.dlq";
 
     static final String QUEUE_EMAIL_VERIFICATION = "notification.email-verification";
     static final String QUEUE_EMAIL_VERIFIED = "notification.email-verified";
@@ -26,7 +26,7 @@ public class RabbitMqConfig {
     static final String RK_PROJECT_STATUS_CHANGED = "notification.project.status-changed";
 
     @Bean
-    public DirectExchange buildingDiaryExchange() {
+    public DirectExchange constructionSiteDiaryExchange() {
         return new DirectExchange(EXCHANGE, true, false);
     }
 
@@ -60,18 +60,18 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding emailVerificationBinding(Queue emailVerificationQueue, DirectExchange buildingDiaryExchange) {
-        return BindingBuilder.bind(emailVerificationQueue).to(buildingDiaryExchange).with(RK_EMAIL_VERIFICATION);
+    public Binding emailVerificationBinding(Queue emailVerificationQueue, DirectExchange constructionSiteDiaryExchange) {
+        return BindingBuilder.bind(emailVerificationQueue).to(constructionSiteDiaryExchange).with(RK_EMAIL_VERIFICATION);
     }
 
     @Bean
-    public Binding emailVerifiedBinding(Queue emailVerifiedQueue, DirectExchange buildingDiaryExchange) {
-        return BindingBuilder.bind(emailVerifiedQueue).to(buildingDiaryExchange).with(RK_EMAIL_VERIFIED);
+    public Binding emailVerifiedBinding(Queue emailVerifiedQueue, DirectExchange constructionSiteDiaryExchange) {
+        return BindingBuilder.bind(emailVerifiedQueue).to(constructionSiteDiaryExchange).with(RK_EMAIL_VERIFIED);
     }
 
     @Bean
-    public Binding projectStatusChangedBinding(Queue projectStatusChangedQueue, DirectExchange buildingDiaryExchange) {
-        return BindingBuilder.bind(projectStatusChangedQueue).to(buildingDiaryExchange).with(RK_PROJECT_STATUS_CHANGED);
+    public Binding projectStatusChangedBinding(Queue projectStatusChangedQueue, DirectExchange constructionSiteDiaryExchange) {
+        return BindingBuilder.bind(projectStatusChangedQueue).to(constructionSiteDiaryExchange).with(RK_PROJECT_STATUS_CHANGED);
     }
 
     @Bean
