@@ -3,10 +3,11 @@ package cz.mp.construction_site_diary.service.impl;
 import cz.mp.construction_site_diary.dto.ProjectDto;
 import cz.mp.construction_site_diary.entity.Project;
 import cz.mp.construction_site_diary.entity.User;
+import cz.mp.construction_site_diary.dto.event.ProjectStatusChangedEvent;
+import cz.mp.construction_site_diary.exception.EmailNotVerifiedException;
 import cz.mp.construction_site_diary.exception.ProjectNotFoundException;
 import cz.mp.construction_site_diary.exception.ProjectStateException;
 import cz.mp.construction_site_diary.exception.UserNotFoundException;
-import cz.mp.construction_site_diary.statemachine.events.ProjectEvent;
 import cz.mp.construction_site_diary.mapper.AddressMapper;
 import cz.mp.construction_site_diary.mapper.ProjectMapper;
 import cz.mp.construction_site_diary.repository.ProjectRepository;
@@ -14,6 +15,7 @@ import cz.mp.construction_site_diary.repository.UserRepository;
 import cz.mp.construction_site_diary.service.ProjectService;
 import cz.mp.construction_site_diary.service.SecurityService;
 import cz.mp.construction_site_diary.statemachine.ProjectStateMachineService;
+import cz.mp.construction_site_diary.statemachine.events.ProjectEvent;
 import cz.mp.construction_site_diary.statemachine.states.ProjectStatus;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,21 +43,29 @@ public class ProjectServiceImpl implements ProjectService {
     private final AddressMapper addressMapper;
     private final ProjectStateMachineService stateMachineService;
     private final SecurityService securityService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private void requireEmailVerified() {
+        if (!securityService.isEmailVerified()) {
+            throw new EmailNotVerifiedException("Email verification required to perform this action");
+        }
+    }
 
     @Override
     @Transactional
     @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     public ProjectDto create(ProjectDto dto) {
+        requireEmailVerified();
         User currentUser = securityService.getCurrentUser();
 
         Project project = projectMapper.toEntity(dto);
         project.setCreatedBy(currentUser);
         project.setStatus(ProjectStatus.PLANNING);
 
-        projectRepository.save(project);
-        LOG.info("Project created: {} by user: {}", project.getId(), currentUser.getEmail());
+        Project savedProject = projectRepository.save(project);
+        LOG.info("Project created: {} by user: {}", savedProject.getId(), currentUser.getEmail());
 
-        return projectMapper.toDto(project);
+        return projectMapper.toDto(savedProject);
     }
 
     @Override
@@ -89,6 +100,7 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public ProjectDto update(UUID id, ProjectDto dto) {
+        requireEmailVerified();
         Project project = findProjectById(id);
 
         projectMapper.updateFromDto(dto, project);
@@ -102,10 +114,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(this::findUserById)
                 .ifPresent(project::setConstructionManager);
 
-        projectRepository.save(project);
-        LOG.info("Project updated: {}", project.getId());
+        Project savedProject = projectRepository.save(project);
+        LOG.info("Project updated: {}", savedProject.getId());
 
-        return projectMapper.toDto(project);
+        return projectMapper.toDto(savedProject);
     }
 
     @Override
@@ -115,10 +127,11 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public void archive(UUID id) {
+        requireEmailVerified();
         Project project = findProjectById(id);
         project.setArchived(true);
-        projectRepository.save(project);
-        LOG.info("Project archived: {}", id);
+        Project savedProject = projectRepository.save(project);
+        LOG.info("Project archived: {}", savedProject.getId());
     }
 
     @Override
@@ -128,14 +141,25 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public ProjectDto start(UUID id) {
+        requireEmailVerified();
         Project project = findProjectById(id);
 
         if (!stateMachineService.sendEvent(project, ProjectEvent.START_WORK)) {
             throw new ProjectStateException("Cannot start project. Ensure construction manager, address, and permit are set.");
         }
 
-        projectRepository.save(project);
-        return projectMapper.toDto(project);
+        Project savedProject = projectRepository.save(project);
+
+        eventPublisher.publishEvent(new ProjectStatusChangedEvent(
+                savedProject.getId().toString(),
+                savedProject.getName(),
+                savedProject.getCreatedBy().getEmail(),
+                savedProject.getConstructionManager() != null ? savedProject.getConstructionManager().getEmail() : null,
+                savedProject.getStatus().name(),
+                savedProject.getStartDate()
+        ));
+
+        return projectMapper.toDto(savedProject);
     }
 
     @Override
@@ -145,14 +169,25 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public ProjectDto complete(UUID id) {
+        requireEmailVerified();
         Project project = findProjectById(id);
 
         if (!stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)) {
             throw new ProjectStateException("Cannot complete project. Ensure all diary entries are filled.");
         }
 
-        projectRepository.save(project);
-        return projectMapper.toDto(project);
+        Project savedProject = projectRepository.save(project);
+
+        eventPublisher.publishEvent(new ProjectStatusChangedEvent(
+                savedProject.getId().toString(),
+                savedProject.getName(),
+                savedProject.getCreatedBy().getEmail(),
+                savedProject.getConstructionManager() != null ? savedProject.getConstructionManager().getEmail() : null,
+                savedProject.getStatus().name(),
+                savedProject.getEndDate()
+        ));
+
+        return projectMapper.toDto(savedProject);
     }
 
     private Project findProjectById(UUID id) {

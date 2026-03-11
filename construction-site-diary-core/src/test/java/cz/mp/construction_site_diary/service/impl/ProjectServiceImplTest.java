@@ -6,6 +6,7 @@ import cz.mp.construction_site_diary.entity.Address;
 import cz.mp.construction_site_diary.enums.Country;
 import cz.mp.construction_site_diary.entity.Project;
 import cz.mp.construction_site_diary.entity.User;
+import cz.mp.construction_site_diary.dto.event.ProjectStatusChangedEvent;
 import cz.mp.construction_site_diary.exception.ProjectNotFoundException;
 import cz.mp.construction_site_diary.exception.ProjectStateException;
 import cz.mp.construction_site_diary.exception.UserNotFoundException;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +62,9 @@ class ProjectServiceImplTest {
     @Mock
     private SecurityService securityService;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
 
@@ -79,6 +84,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldCreateProjectSuccessfully() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectMapper.toEntity(projectDto)).thenReturn(project);
             when(projectRepository.save(project)).thenReturn(project);
@@ -159,6 +165,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldUpdateProjectSuccessfully() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -174,6 +181,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldUpdateAddressWhenProvided() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             Address address = new Address();
             project.setConstructionSiteAddress(address);
             AddressDto addressDto = new AddressDto("1234/5", null, null, "Praha", "11000", Country.CZ);
@@ -201,6 +209,7 @@ class ProjectServiceImplTest {
                     null, MANAGER_ID, null, null, null, null
             );
 
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -220,6 +229,7 @@ class ProjectServiceImplTest {
                     null, MANAGER_ID, null, null, null, null
             );
 
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -235,9 +245,11 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldArchiveProjectSuccessfully() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+            when(projectRepository.save(project)).thenReturn(project);
 
             projectService.archive(PROJECT_ID);
 
@@ -247,6 +259,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProjectNotFound() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(false);
 
@@ -260,6 +273,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldStartProjectWhenTransitionAccepted() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -272,10 +286,12 @@ class ProjectServiceImplTest {
             assertThat(result).isEqualTo(projectDto);
             verify(stateMachineService).sendEvent(project, ProjectEvent.START_WORK);
             verify(projectRepository).save(project);
+            verify(eventPublisher).publishEvent(any(ProjectStatusChangedEvent.class));
         }
 
         @Test
         void shouldThrowExceptionWhenTransitionRejected() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -292,6 +308,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldCompleteProjectWhenTransitionAccepted() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -304,10 +321,12 @@ class ProjectServiceImplTest {
             assertThat(result).isEqualTo(projectDto);
             verify(stateMachineService).sendEvent(project, ProjectEvent.COMPLETE);
             verify(projectRepository).save(project);
+            verify(eventPublisher).publishEvent(any(ProjectStatusChangedEvent.class));
         }
 
         @Test
         void shouldThrowExceptionWhenTransitionRejected() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.getCurrentUser()).thenReturn(currentUser);
             when(projectRepository.hasAccess(PROJECT_ID, USER_ID)).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
@@ -355,6 +374,7 @@ class ProjectServiceImplTest {
 
         @Test
         void shouldAllowAdminToUpdateAnyProject() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(securityService.isAdmin()).thenReturn(true);
             when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(projectRepository.save(project)).thenReturn(project);

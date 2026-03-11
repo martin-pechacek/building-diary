@@ -1,12 +1,16 @@
 package cz.mp.construction_site_diary.statemachine.guard;
 
 import cz.mp.construction_site_diary.entity.Project;
+import cz.mp.construction_site_diary.repository.DiaryEntryRepository;
 import cz.mp.construction_site_diary.statemachine.config.ProjectStateMachineConfig;
 import cz.mp.construction_site_diary.statemachine.events.ProjectEvent;
 import cz.mp.construction_site_diary.statemachine.states.ProjectStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.statemachine.ExtendedState;
 import org.springframework.statemachine.StateContext;
 
@@ -17,7 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class CompletionGuardTest {
+
+    @Mock
+    private DiaryEntryRepository diaryEntryRepository;
 
     private CompletionGuard guard;
     private StateContext<ProjectStatus, ProjectEvent> context;
@@ -25,7 +33,7 @@ class CompletionGuardTest {
 
     @BeforeEach
     void setUp() {
-        guard = new CompletionGuard();
+        guard = new CompletionGuard(diaryEntryRepository);
         context = mock(StateContext.class);
         extendedState = mock(ExtendedState.class);
 
@@ -64,8 +72,8 @@ class CompletionGuardTest {
             Project project = createProject();
             project.setStartDate(LocalDate.now().minusDays(5));
             when(extendedState.get(ProjectStateMachineConfig.PROJECT_HEADER, Project.class)).thenReturn(project);
+            when(diaryEntryRepository.countByProjectId(project.getId())).thenReturn(0L);
 
-            // Currently returns false because filledDays is hardcoded to 0 (TODO in guard)
             assertThat(guard.evaluate(context)).isFalse();
         }
     }

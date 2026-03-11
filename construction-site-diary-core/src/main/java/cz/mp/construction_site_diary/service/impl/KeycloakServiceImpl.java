@@ -57,6 +57,14 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
+    public void updateEmailVerified(String keycloakId, boolean emailVerified) {
+        UserRepresentation user = getUsersResource().get(keycloakId).toRepresentation();
+        user.setEmailVerified(emailVerified);
+        getUsersResource().get(keycloakId).update(user);
+        LOG.info("Updated emailVerified={} for Keycloak user: {}", emailVerified, keycloakId);
+    }
+
+    @Override
     public void deleteUser(String userId) {
         try {
             getUsersResource().get(userId).remove();

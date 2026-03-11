@@ -8,7 +8,7 @@ A microservice-based web application for tracking construction and building proj
 
 ## Architecture
 
-The application follows a microservice architecture, organized as a multi-module Gradle monorepo. Each service has its own database, runs independently, and communicates via REST. Authentication is shared through a common Keycloak realm and JWT tokens.
+The application follows a microservice architecture, organized as a multi-module Gradle monorepo. Each service has its own database, runs independently, and communicates via REST or message queue. Authentication is shared through a common Keycloak realm and JWT tokens.
 
 ### Service Overview
 
@@ -16,14 +16,17 @@ The application follows a microservice architecture, organized as a multi-module
 |---------|--------|------|----------|-------------|
 | Core Service | `construction-site-diary-core` | 8080 | `construction_site_diary` | Projects, diary entries, authentication, export |
 | Photos Service | `photos-service` | 8081 | `photos` | Photo upload, download, management |
+| Notification Service | `notification-service` | 8082 | `notifications` | Async email notifications |
 
 ### Infrastructure
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| PostgreSQL | 5432 | Databases for core and photos services |
+| PostgreSQL | 5432 | Databases for core, photos, and notification services |
 | Redis | 6379 | Caching |
 | Keycloak | 8180 | Authentication and authorization |
+| RabbitMQ | 5672 / 15672 | Message queue / Management UI |
+| Mailpit | 1025 / 8025 | SMTP (dev) / Email inbox UI |
 
 ## Table of Contents
 
@@ -42,6 +45,7 @@ The application follows a microservice architecture, organized as a multi-module
 - [Authentication](#authentication)
   - [Auth Flow (Stateless JWT)](#auth-flow-stateless-jwt)
   - [Auth Endpoints](#auth-endpoints)
+  - [Email Verification Enforcement](#email-verification-enforcement)
   - [Keycloak Clients](#keycloak-clients)
 - [Construction Projects](#construction-projects)
   - [Project Lifecycle](#project-lifecycle)
@@ -50,6 +54,10 @@ The application follows a microservice architecture, organized as a multi-module
 - [Diary Export](#diary-export)
 - [Photo Upload](#photo-upload)
 - [Weather Integration](#weather-integration)
+- [Notification Service](#notification-service)
+  - [Emails Sent](#emails-sent)
+  - [Messaging Architecture](#messaging-architecture)
+  - [Notification Audit Log](#notification-audit-log)
 
 ## Tech Stack
 
@@ -90,16 +98,24 @@ The application follows a microservice architecture, organized as a multi-module
    ./gradlew :photos-service:bootRun
    ```
 
+5. Run the notification service:
+   ```bash
+   ./gradlew :notification-service:bootRun
+   ```
+
 ## Docker Setup
 
 The project includes a Docker Compose configuration in the `docker/` folder for local development with the following services:
 
 | Service    | Port | Credentials                    | Purpose                       |
 |------------|------|--------------------------------|-------------------------------|
-| PostgreSQL | 5432 | `construction_site_diary:construction_site_diary`| Core database                 |
+| PostgreSQL | 5432 | `construction_site_diary:construction_site_diary` | Core database        |
 | PostgreSQL | 5432 | `photos_user:photos_user`      | Photos database               |
+| PostgreSQL | 5432 | `notifications_user:notifications_pass` | Notifications database |
 | Redis      | 6379 | -                              | Caching                       |
 | Keycloak   | 8180 | `admin:admin`                  | Authentication server         |
+| RabbitMQ   | 5672 / 15672 | `construction_site_diary:diary` | Message queue / Management UI |
+| Mailpit    | 1025 / 8025 | -                             | SMTP (dev) / Email inbox UI   |
 
 ### Commands
 
@@ -119,6 +135,7 @@ All service data is persisted in Docker volumes:
 - `postgres_data` - PostgreSQL database files
 - `redis_data` - Redis append-only file
 - `keycloak_data` - Keycloak data
+- `rabbitmq_data` - RabbitMQ queue data
 
 ### Keycloak Admin Console
 
@@ -275,6 +292,7 @@ Build a specific module:
 ```bash
 ./gradlew :construction-site-diary-core:build
 ./gradlew :photos-service:build
+./gradlew :notification-service:build
 ```
 
 Run tests:
@@ -289,9 +307,13 @@ The application expects the following services:
 | Service    | Default Port | Purpose                    |
 |------------|--------------|----------------------------|
 | PostgreSQL | 5432         | Core database (`construction_site_diary`) |
-| PostgreSQL | 5432         | Photos database (`photos`)       |
+| PostgreSQL | 5432         | Photos database (`photos`) |
+| PostgreSQL | 5432         | Notifications database (`notifications`) |
 | Redis      | 6379         | Caching                    |
 | Keycloak   | 8180         | Authentication server      |
+| RabbitMQ   | 5672 / 15672 | Message queue / Management UI |
+| Mailpit    | 1025 / 8025  | Email delivery / inbox (dev) |
+| Notification Service | 8082 | Notification service     |
 
 Configure connection details in `application.yaml` or via environment variables.
 
@@ -351,9 +373,14 @@ The application uses stateless JWT authentication. Tokens are issued by Keycloak
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/auth/register` | POST | Register new user |
+| `/api/v1/auth/register` | POST | Register new user (core publishes event → notification service sends verification email) |
 | `/api/v1/auth/login` | POST | Authenticate and get JWT tokens |
 | `/api/v1/auth/refresh` | POST | Refresh tokens (via `X-Refresh-Token` header) |
+| `/api/v1/auth/verify-email` | GET | Verify email address via token from email link |
+
+### Email Verification Enforcement
+
+Users who have not verified their email can log in and read data, but all mutating operations (create/update/archive projects, manage diary entries) return **403 Forbidden** until verified. The check is enforced at two layers:
 
 ### Keycloak Clients
 
@@ -509,3 +536,33 @@ Diary entries can automatically fetch weather data for the construction site loc
 ### Supported Countries
 
 Weather lookup works for cities in Czech Republic (CZ) and Slovakia (SK).
+
+## Notification Service
+
+The notification service delivers transactional emails for key application events. It runs as an independent service on port 8082.
+
+### Emails Sent
+
+| Trigger | Recipients | Email |
+|---------|------------|-------|
+| User registration | Registering user | Email verification link |
+| Email verified | Registering user | Confirmation that email was successfully verified |
+| Project started | Project owner + construction manager (if assigned and different) | Status update with project name and start date |
+| Project completed | Project owner + construction manager (if assigned and different) | Status update with project name and completion date |
+
+### Messaging Architecture
+
+The core service publishes events via Spring's `ApplicationEventPublisher` using `@TransactionalEventListener(phase = AFTER_COMMIT)` — events are only sent to RabbitMQ after the database transaction commits.
+
+### Notification Audit Log
+
+Every sent email is recorded in the `notification_log` table in the `notifications` database:
+
+
+### Local Development — Viewing Emails
+
+In development, all outgoing emails are captured by **Mailpit** instead of being delivered. Access the email inbox at **http://localhost:8025** after starting the Docker services.
+
+### RabbitMQ Management UI
+
+Queue status and message flow can be monitored at **http://localhost:15672** (credentials: `construction_site_diary` / `diary`).

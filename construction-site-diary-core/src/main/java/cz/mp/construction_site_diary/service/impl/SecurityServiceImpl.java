@@ -25,7 +25,7 @@ public class SecurityServiceImpl implements SecurityService {
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
                 .filter(Authentication::isAuthenticated)
                 .map(Authentication::getName)
-                .flatMap(userRepository::findByEmail)
+                .flatMap(email -> userRepository.findByEmail(email))
                 .orElseThrow(() -> new UserNotFoundException("No authenticated user or user not found"));
     }
 
@@ -37,6 +37,15 @@ public class SecurityServiceImpl implements SecurityService {
                 .map(authorities -> authorities.stream()
                         .map(GrantedAuthority::getAuthority)
                         .anyMatch(ROLE_ADMIN::equals))
+                .orElse(false);
+    }
+
+    @Override
+    public boolean isEmailVerified() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .filter(Authentication::isAuthenticated)
+                .map(Authentication::getDetails)
+                .map(details -> Boolean.TRUE.equals(details))
                 .orElse(false);
     }
 }

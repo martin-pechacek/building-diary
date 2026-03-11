@@ -13,6 +13,8 @@ import cz.mp.construction_site_diary.mapper.WorkforceEntryMapper;
 import cz.mp.construction_site_diary.repository.DiaryEntryRepository;
 import cz.mp.construction_site_diary.repository.ProjectRepository;
 import cz.mp.construction_site_diary.service.ProjectService;
+import cz.mp.construction_site_diary.service.SecurityService;
+import cz.mp.construction_site_diary.service.WeatherService;
 import cz.mp.construction_site_diary.statemachine.states.ProjectStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -57,6 +59,12 @@ class DiaryEntryServiceImplTest {
     private ProjectService projectService;
 
     @Mock
+    private SecurityService securityService;
+
+    @Mock
+    private WeatherService weatherService;
+
+    @Mock
     private DiaryEntryMapper diaryEntryMapper;
 
     @Mock
@@ -91,7 +99,8 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldCreateDiaryEntrySuccessfully() {
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
+            when(securityService.isEmailVerified()).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE)).thenReturn(Optional.empty());
             when(projectRepository.getReferenceById(PROJECT_ID)).thenReturn(project);
             when(diaryEntryMapper.toEntity(diaryEntryDto, workforceEntryMapper, materialUsageMapper)).thenReturn(diaryEntry);
@@ -108,6 +117,7 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenNoAccess() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             doThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID))
                     .when(projectService).hasAccess(PROJECT_ID);
 
@@ -119,7 +129,11 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProjectIsCompleted() {
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.COMPLETED);
+            when(securityService.isEmailVerified()).thenReturn(true);
+            Project completedProject = new Project();
+            completedProject.setId(PROJECT_ID);
+            completedProject.setStatus(ProjectStatus.COMPLETED);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(completedProject));
 
             assertThatThrownBy(() -> diaryEntryService.create(PROJECT_ID, diaryEntryDto))
                     .isInstanceOf(ProjectStateException.class)
@@ -130,7 +144,8 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenEntryAlreadyExistsForDate() {
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
+            when(securityService.isEmailVerified()).thenReturn(true);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(diaryEntryRepository.findByProjectIdAndDate(PROJECT_ID, ENTRY_DATE))
                     .thenReturn(Optional.of(diaryEntry));
 
@@ -234,8 +249,9 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldUpdateDiaryEntrySuccessfully() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.of(diaryEntry));
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.IN_PROGRESS);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
             when(diaryEntryMapper.toDto(diaryEntry)).thenReturn(diaryEntryDto);
 
             DiaryEntryDto result = diaryEntryService.update(ENTRY_ID, diaryEntryDto);
@@ -258,6 +274,7 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenNoAccess() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.of(diaryEntry));
             doThrow(new ProjectNotFoundException("Project not found: " + PROJECT_ID))
                     .when(projectService).hasAccess(PROJECT_ID);
@@ -270,8 +287,12 @@ class DiaryEntryServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProjectIsCompleted() {
+            when(securityService.isEmailVerified()).thenReturn(true);
             when(diaryEntryRepository.findById(ENTRY_ID)).thenReturn(Optional.of(diaryEntry));
-            when(projectRepository.findStatusById(PROJECT_ID)).thenReturn(ProjectStatus.COMPLETED);
+            Project completedProject = new Project();
+            completedProject.setId(PROJECT_ID);
+            completedProject.setStatus(ProjectStatus.COMPLETED);
+            when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(completedProject));
 
             assertThatThrownBy(() -> diaryEntryService.update(ENTRY_ID, diaryEntryDto))
                     .isInstanceOf(ProjectStateException.class)

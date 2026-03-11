@@ -12,4 +12,6 @@ public interface KeycloakService {
     KeycloakTokenDto authenticate(String username, String password);
 
     KeycloakTokenDto refreshToken(String refreshToken);
+
+    void updateEmailVerified(String keycloakId, boolean emailVerified);
 }

@@ -1,9 +1,11 @@
 package cz.mp.construction_site_diary.statemachine.guard;
 
 import cz.mp.construction_site_diary.entity.Project;
+import cz.mp.construction_site_diary.repository.DiaryEntryRepository;
 import cz.mp.construction_site_diary.statemachine.events.ProjectEvent;
 import cz.mp.construction_site_diary.statemachine.config.ProjectStateMachineConfig;
 import cz.mp.construction_site_diary.statemachine.states.ProjectStatus;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.statemachine.StateContext;
@@ -14,12 +16,12 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Component
+@RequiredArgsConstructor
 public class CompletionGuard implements Guard<ProjectStatus, ProjectEvent> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CompletionGuard.class);
 
-    // TODO: Inject DiaryEntryRepository when DiaryEntry entity is created
-    // private final DiaryEntryRepository diaryEntryRepository;
+    private final DiaryEntryRepository diaryEntryRepository;
 
     @Override
     public boolean evaluate(StateContext<ProjectStatus, ProjectEvent> context) {
@@ -36,10 +38,7 @@ public class CompletionGuard implements Guard<ProjectStatus, ProjectEvent> {
         }
 
         long expectedDays = ChronoUnit.DAYS.between(project.getStartDate(), LocalDate.now()) + 1;
-
-        // TODO: Replace with actual diary entry count when DiaryEntry entity is created
-        // long filledDays = diaryEntryRepository.countByProjectId(project.getId());
-        long filledDays = 0; // Placeholder
+        long filledDays = diaryEntryRepository.countByProjectId(project.getId());
 
         boolean allDaysFilled = filledDays >= expectedDays;
 
