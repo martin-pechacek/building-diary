@@ -13,6 +13,7 @@ public class RabbitMqConfig {
     public static final String EXCHANGE = "building-diary.events";
 
     public static final String ROUTING_KEY_EMAIL_VERIFICATION = "notification.user.email-verification";
+    public static final String ROUTING_KEY_EMAIL_VERIFIED = "notification.user.email-verified";
     public static final String ROUTING_KEY_PROJECT_STATUS_CHANGED = "notification.project.status-changed";
 
     @Bean
@@ -21,7 +22,7 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public JacksonJsonMessageConverter jackson2JsonMessageConverter() {
+    public JacksonJsonMessageConverter jacksonJsonMessageConverter() {
         return new JacksonJsonMessageConverter();
     }
 

@@ -3,7 +3,8 @@ package cz.mp.construction_site_diary.service.impl;
 import cz.mp.construction_site_diary.dto.ProjectDto;
 import cz.mp.construction_site_diary.entity.Project;
 import cz.mp.construction_site_diary.entity.User;
-import cz.mp.construction_site_diary.event.ProjectStatusChangedEvent;
+import cz.mp.construction_site_diary.dto.event.ProjectStatusChangedEvent;
+import cz.mp.construction_site_diary.exception.EmailNotVerifiedException;
 import cz.mp.construction_site_diary.exception.ProjectNotFoundException;
 import cz.mp.construction_site_diary.exception.ProjectStateException;
 import cz.mp.construction_site_diary.exception.UserNotFoundException;
@@ -44,10 +45,17 @@ public class ProjectServiceImpl implements ProjectService {
     private final SecurityService securityService;
     private final ApplicationEventPublisher eventPublisher;
 
+    private void requireEmailVerified() {
+        if (!securityService.isEmailVerified()) {
+            throw new EmailNotVerifiedException("Email verification required to perform this action");
+        }
+    }
+
     @Override
     @Transactional
     @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     public ProjectDto create(ProjectDto dto) {
+        requireEmailVerified();
         User currentUser = securityService.getCurrentUser();
 
         Project project = projectMapper.toEntity(dto);
@@ -92,6 +100,7 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public ProjectDto update(UUID id, ProjectDto dto) {
+        requireEmailVerified();
         Project project = findProjectById(id);
 
         projectMapper.updateFromDto(dto, project);
@@ -118,6 +127,7 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public void archive(UUID id) {
+        requireEmailVerified();
         Project project = findProjectById(id);
         project.setArchived(true);
         Project savedProject = projectRepository.save(project);
@@ -131,6 +141,7 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public ProjectDto start(UUID id) {
+        requireEmailVerified();
         Project project = findProjectById(id);
 
         if (!stateMachineService.sendEvent(project, ProjectEvent.START_WORK)) {
@@ -158,6 +169,7 @@ public class ProjectServiceImpl implements ProjectService {
             @CacheEvict(value = "projectsByUser", key = "@securityService.getCurrentUser().id")
     })
     public ProjectDto complete(UUID id) {
+        requireEmailVerified();
         Project project = findProjectById(id);
 
         if (!stateMachineService.sendEvent(project, ProjectEvent.COMPLETE)) {

@@ -5,21 +5,6 @@ spring:
   application:
     name: construction-site-diary
 
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak:
-            client-id: construction-site-diary-client
-            client-secret: IGm1CRdduJgUTmfqAeE6JjbiU2gBUN5r
-            scope: openid,profile,email
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-        provider:
-          keycloak:
-            issuer-uri: http://localhost:8180/realms/construction-site-diary
-            user-name-attribute: preferred_username
-
   datasource:
     url: jdbc:postgresql://localhost:5432/construction_site_diary
     username: construction_site_diary
@@ -45,22 +30,22 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: building_diary
-    password: building_diary
+    username: construction_site_diary
+    password: diary
 
 keycloak:
   admin:
     server-url: http://localhost:8180
     realm: construction-site-diary
     client-id: construction-site-diary-admin
-    client-secret: mxY6MLh4VAxyncxgquemTKwhyr9mhEBn
+    client-secret: Pe96CCHMT6vC3892u8okLB6nE9deP2iH
     target-realm: construction-site-diary
     default-role: USER
   client:
     server-url: http://localhost:8180
     realm: construction-site-diary
     client-id: construction-site-diary-client
-    client-secret: h0F49dDVkxTimMEEWtktVHUfYuYejUzX
+    client-secret: 4gNpOPtcyflyPKwONo9sT4LEWR56aRK7
 
 springdoc:
   api-docs:

@@ -4,7 +4,7 @@ import cz.mp.construction_site_diary.controller.AuthController;
 import cz.mp.construction_site_diary.dto.UserRegistrationDto;
 import cz.mp.construction_site_diary.entity.User;
 import cz.mp.construction_site_diary.enums.TokenType;
-import cz.mp.construction_site_diary.event.EmailVerificationEvent;
+import cz.mp.construction_site_diary.dto.event.EmailVerificationEvent;
 import cz.mp.construction_site_diary.exception.UserNotFoundException;
 import cz.mp.construction_site_diary.exception.UserRegistrationException;
 import cz.mp.construction_site_diary.exception.UserRegistrationException.ErrorCode;

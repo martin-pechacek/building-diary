@@ -45,6 +45,7 @@ The application follows a microservice architecture, organized as a multi-module
 - [Authentication](#authentication)
   - [Auth Flow (Stateless JWT)](#auth-flow-stateless-jwt)
   - [Auth Endpoints](#auth-endpoints)
+  - [Email Verification Enforcement](#email-verification-enforcement)
   - [Keycloak Clients](#keycloak-clients)
 - [Construction Projects](#construction-projects)
   - [Project Lifecycle](#project-lifecycle)
@@ -54,6 +55,9 @@ The application follows a microservice architecture, organized as a multi-module
 - [Photo Upload](#photo-upload)
 - [Weather Integration](#weather-integration)
 - [Notification Service](#notification-service)
+  - [Emails Sent](#emails-sent)
+  - [Messaging Architecture](#messaging-architecture)
+  - [Notification Audit Log](#notification-audit-log)
 
 ## Tech Stack
 
@@ -369,9 +373,14 @@ The application uses stateless JWT authentication. Tokens are issued by Keycloak
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/auth/register` | POST | Register new user |
+| `/api/v1/auth/register` | POST | Register new user (core publishes event → notification service sends verification email) |
 | `/api/v1/auth/login` | POST | Authenticate and get JWT tokens |
 | `/api/v1/auth/refresh` | POST | Refresh tokens (via `X-Refresh-Token` header) |
+| `/api/v1/auth/verify-email` | GET | Verify email address via token from email link |
+
+### Email Verification Enforcement
+
+Users who have not verified their email can log in and read data, but all mutating operations (create/update/archive projects, manage diary entries) return **403 Forbidden** until verified. The check is enforced at two layers:
 
 ### Keycloak Clients
 
@@ -534,11 +543,21 @@ The notification service delivers transactional emails for key application event
 
 ### Emails Sent
 
-| Trigger | Recipients |
-|---------|------------|
-| User registration | Registering user — email verification link |
-| Project started | Project owner + construction manager (if assigned and different) |
-| Project completed | Project owner + construction manager (if assigned and different) |
+| Trigger | Recipients | Email |
+|---------|------------|-------|
+| User registration | Registering user | Email verification link |
+| Email verified | Registering user | Confirmation that email was successfully verified |
+| Project started | Project owner + construction manager (if assigned and different) | Status update with project name and start date |
+| Project completed | Project owner + construction manager (if assigned and different) | Status update with project name and completion date |
+
+### Messaging Architecture
+
+The core service publishes events via Spring's `ApplicationEventPublisher` using `@TransactionalEventListener(phase = AFTER_COMMIT)` — events are only sent to RabbitMQ after the database transaction commits.
+
+### Notification Audit Log
+
+Every sent email is recorded in the `notification_log` table in the `notifications` database:
+
 
 ### Local Development — Viewing Emails
 

@@ -2,7 +2,7 @@ package cz.mp.construction_site_diary.service.impl;
 
 import cz.mp.construction_site_diary.dto.UserRegistrationDto;
 import cz.mp.construction_site_diary.enums.TokenType;
-import cz.mp.construction_site_diary.event.EmailVerificationEvent;
+import cz.mp.construction_site_diary.dto.event.EmailVerificationEvent;
 import cz.mp.construction_site_diary.exception.UserRegistrationException;
 import cz.mp.construction_site_diary.exception.UserRegistrationException.ErrorCode;
 import cz.mp.construction_site_diary.mapper.UserMapper;

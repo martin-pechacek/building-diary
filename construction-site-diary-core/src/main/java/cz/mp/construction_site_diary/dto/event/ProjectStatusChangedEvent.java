@@ -1,4 +1,4 @@
-package cz.mp.construction_site_diary.event;
+package cz.mp.construction_site_diary.dto.event;
 
 import java.time.LocalDate;
 

@@ -1,8 +1,9 @@
 package cz.mp.construction_site_diary.listener;
 
 import cz.mp.construction_site_diary.config.RabbitMqConfig;
-import cz.mp.construction_site_diary.event.EmailVerificationEvent;
-import cz.mp.construction_site_diary.event.ProjectStatusChangedEvent;
+import cz.mp.construction_site_diary.dto.event.EmailVerificationEvent;
+import cz.mp.construction_site_diary.dto.event.EmailVerifiedEvent;
+import cz.mp.construction_site_diary.dto.event.ProjectStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,12 @@ public class NotificationEventListener {
     public void onEmailVerification(EmailVerificationEvent event) {
         rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE, RabbitMqConfig.ROUTING_KEY_EMAIL_VERIFICATION, event);
         LOG.info("Published email verification event for user: {}", event.email());
+    }
+
+    @TransactionalEventListener
+    public void onEmailVerified(EmailVerifiedEvent event) {
+        rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE, RabbitMqConfig.ROUTING_KEY_EMAIL_VERIFIED, event);
+        LOG.info("Published email verified event for user: {}", event.email());
     }
 
     @TransactionalEventListener

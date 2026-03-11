@@ -1,6 +1,7 @@
 package cz.mp.notification_service.consumer;
 
 import cz.mp.notification_service.dto.EmailVerificationEvent;
+import cz.mp.notification_service.dto.EmailVerifiedEvent;
 import cz.mp.notification_service.dto.ProjectStatusChangedEvent;
 import cz.mp.notification_service.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,12 @@ public class NotificationEventConsumer {
     public void onEmailVerification(EmailVerificationEvent event) {
         LOG.info("Received email verification event for: {}", event.email());
         emailService.sendEmailVerification(event);
+    }
+
+    @RabbitListener(queues = "#{@emailVerifiedQueue.name}")
+    public void onEmailVerified(EmailVerifiedEvent event) {
+        LOG.info("Received email verified event for: {}", event.email());
+        emailService.sendEmailVerified(event);
     }
 
     @RabbitListener(queues = "#{@projectStatusChangedQueue.name}")

@@ -2,12 +2,12 @@ package cz.mp.notification_service.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
-import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,9 +18,11 @@ public class RabbitMqConfig {
     static final String DLQ = "building-diary.dlq";
 
     static final String QUEUE_EMAIL_VERIFICATION = "notification.email-verification";
+    static final String QUEUE_EMAIL_VERIFIED = "notification.email-verified";
     static final String QUEUE_PROJECT_STATUS_CHANGED = "notification.project-status-changed";
 
     static final String RK_EMAIL_VERIFICATION = "notification.user.email-verification";
+    static final String RK_EMAIL_VERIFIED = "notification.user.email-verified";
     static final String RK_PROJECT_STATUS_CHANGED = "notification.project.status-changed";
 
     @Bean
@@ -42,6 +44,14 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public Queue emailVerifiedQueue() {
+        return QueueBuilder.durable(QUEUE_EMAIL_VERIFIED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", DLQ)
+                .build();
+    }
+
+    @Bean
     public Queue projectStatusChangedQueue() {
         return QueueBuilder.durable(QUEUE_PROJECT_STATUS_CHANGED)
                 .withArgument("x-dead-letter-exchange", "")
@@ -55,18 +65,23 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public Binding emailVerifiedBinding(Queue emailVerifiedQueue, DirectExchange buildingDiaryExchange) {
+        return BindingBuilder.bind(emailVerifiedQueue).to(buildingDiaryExchange).with(RK_EMAIL_VERIFIED);
+    }
+
+    @Bean
     public Binding projectStatusChangedBinding(Queue projectStatusChangedQueue, DirectExchange buildingDiaryExchange) {
         return BindingBuilder.bind(projectStatusChangedQueue).to(buildingDiaryExchange).with(RK_PROJECT_STATUS_CHANGED);
     }
 
     @Bean
-    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+    public JacksonJsonMessageConverter jacksonJsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
     }
 
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                         Jackson2JsonMessageConverter converter) {
+                                         JacksonJsonMessageConverter converter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(converter);
         return template;

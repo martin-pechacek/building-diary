@@ -6,6 +6,8 @@ import cz.mp.construction_site_diary.entity.DiaryEntry;
 import cz.mp.construction_site_diary.entity.Project;
 import cz.mp.construction_site_diary.exception.DiaryEntryAlreadyExistsException;
 import cz.mp.construction_site_diary.exception.DiaryEntryNotFoundException;
+import cz.mp.construction_site_diary.exception.EmailNotVerifiedException;
+import cz.mp.construction_site_diary.exception.ProjectNotFoundException;
 import cz.mp.construction_site_diary.exception.ProjectStateException;
 import cz.mp.construction_site_diary.statemachine.states.ProjectStatus;
 import cz.mp.construction_site_diary.mapper.DiaryEntryMapper;
@@ -15,6 +17,7 @@ import cz.mp.construction_site_diary.repository.DiaryEntryRepository;
 import cz.mp.construction_site_diary.repository.ProjectRepository;
 import cz.mp.construction_site_diary.service.DiaryEntryService;
 import cz.mp.construction_site_diary.service.ProjectService;
+import cz.mp.construction_site_diary.service.SecurityService;
 import cz.mp.construction_site_diary.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -39,6 +42,7 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     private final DiaryEntryRepository diaryEntryRepository;
     private final ProjectRepository projectRepository;
     private final ProjectService projectService;
+    private final SecurityService securityService;
     private final WeatherService weatherService;
     private final DiaryEntryMapper diaryEntryMapper;
     private final WorkforceEntryMapper workforceEntryMapper;
@@ -127,12 +131,20 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     }
 
     private void checkConditions(UUID projectId, DiaryEntryDto dto, boolean checkDateUniqueness) {
+        if (!securityService.isEmailVerified()) {
+            throw new EmailNotVerifiedException("Email verification required to perform this action");
+        }
         projectService.hasAccess(projectId);
-        ProjectStatus status = projectRepository.findStatusById(projectId);
-        if (status == ProjectStatus.COMPLETED) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException("Project not found: " + projectId));
+
+        if (project.getStatus() == ProjectStatus.COMPLETED) {
             throw new ProjectStateException("Cannot add or modify diary entry in a completed project");
         }
-
+        if (project.getStartDate() != null && dto.date().isBefore(project.getStartDate())) {
+            throw new ProjectStateException("Diary entry date cannot be before project start date " + project.getStartDate());
+        }
         if (checkDateUniqueness && diaryEntryRepository.findByProjectIdAndDate(projectId, dto.date()).isPresent()) {
             throw new DiaryEntryAlreadyExistsException(
                     "Diary entry already exists for project " + projectId + " on date " + dto.date());

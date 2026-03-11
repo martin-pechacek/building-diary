@@ -79,6 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 null,
                 authorities
         );
+        authentication.setDetails(Boolean.TRUE.equals(claims.get("email_verified")));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         LOG.debug("Set security context for user: {} with roles: {}", username, roles);

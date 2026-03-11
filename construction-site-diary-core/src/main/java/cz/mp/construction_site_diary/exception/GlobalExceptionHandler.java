@@ -103,6 +103,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ErrorDto> handleEmailNotVerifiedException(EmailNotVerifiedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorDto(ex.getMessage(), HttpStatus.FORBIDDEN.value()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
         LOG.error("Unexpected error occurred", ex);

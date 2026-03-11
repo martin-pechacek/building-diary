@@ -1,6 +1,7 @@
 package cz.mp.notification_service.service.impl;
 
 import cz.mp.notification_service.dto.EmailVerificationEvent;
+import cz.mp.notification_service.dto.EmailVerifiedEvent;
 import cz.mp.notification_service.dto.ProjectStatusChangedEvent;
 import cz.mp.notification_service.entity.NotificationLog;
 import cz.mp.notification_service.properties.MailProperties;
@@ -37,6 +38,13 @@ public class EmailServiceImpl implements EmailService {
 
         sendHtmlEmail(event.email(), "Verify your Construction Site Diary account", "email-verification", ctx);
         logNotification("EMAIL_VERIFICATION", event.email());
+    }
+
+    @Override
+    public void sendEmailVerified(EmailVerifiedEvent event) {
+        Context ctx = new Context();
+        sendHtmlEmail(event.email(), "Your Construction Site Diary email has been verified", "email-verified", ctx);
+        logNotification("EMAIL_VERIFIED", event.email());
     }
 
     @Override

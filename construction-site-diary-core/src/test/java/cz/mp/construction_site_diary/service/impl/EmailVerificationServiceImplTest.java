@@ -13,10 +13,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,14 +35,18 @@ class EmailVerificationServiceImplTest {
     @Mock
     private KeycloakService keycloakService;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private EmailVerificationServiceImpl emailVerificationService;
 
     private User user;
 
     @BeforeEach
     void setUp() {
-        emailVerificationService = new EmailVerificationServiceImpl(verificationTokenRepository, keycloakService);
+        emailVerificationService = new EmailVerificationServiceImpl(verificationTokenRepository, keycloakService, eventPublisher);
         user = new User("kc-123", "user@test.com", "Test", "User");
+        user.setId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
     }
 
     @Nested

@@ -1,5 +1,6 @@
 package cz.mp.construction_site_diary.config;
 
+import cz.mp.construction_site_diary.filter.EmailVerificationFilter;
 import cz.mp.construction_site_diary.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -18,9 +19,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final EmailVerificationFilter emailVerificationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, EmailVerificationFilter emailVerificationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.emailVerificationFilter = emailVerificationFilter;
     }
 
     @Bean
@@ -28,6 +31,7 @@ public class SecurityConfig {
         http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(emailVerificationFilter, JwtAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/swagger-ui.html",

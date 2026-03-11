@@ -7,4 +7,6 @@ public interface SecurityService {
     User getCurrentUser();
 
     boolean isAdmin();
+
+    boolean isEmailVerified();
 }
